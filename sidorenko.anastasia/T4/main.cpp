@@ -59,12 +59,12 @@ int main()
     shapes.push_back(std::move(composite));
     printInfo(shapes);
     double factor = 0.0;
-    if (!(std::cin >> factor)) 
+    if (!(std::cin >> factor))
     {
         std::cerr << "Error: no scale factor provided\n";
         return 1;
     }
-    if (factor <= 0.0) 
+    if (factor <= 0.0)
     {
         std::cerr << "Error: scale factor must be positive\n";
         return 1;
@@ -76,3 +76,4 @@ int main()
     printInfo(shapes);
     return 0;
 }
+
