@@ -1,11 +1,10 @@
-
 #include "rectangle.h"
 #include "ellipse.h"
-#include <iostream>
-#include <vector>
 #include "recttrapezoid.h"
 #include "compositeshape.h"
-
+#include <iostream>
+#include <vector>
+#include <memory>
 
 template<class T>
 void fillContainer(std::vector<std::unique_ptr<Shape>>& cont, T shape)
@@ -21,7 +20,7 @@ void scaleInContainer(std::vector<std::unique_ptr<Shape>>& cont, int factor)
     }
     else
     {
-        for (int i = 0; i < cont.size(); ++i)
+        for (size_t i = 0; i < cont.size(); ++i)
         {
             cont[i]->scale(factor);
         }
@@ -36,7 +35,7 @@ void printCont(const std::vector<std::unique_ptr<Shape>>& cont)
     }
     else
     {
-        for (int i = 0; i < cont.size(); ++i)
+        for (size_t i = 0; i < cont.size(); ++i)
         {
             std::cout << *cont[i] << std::endl;
         }
@@ -49,6 +48,7 @@ int main()
     {
         std::vector<std::unique_ptr<Shape>> container;
         std::cout << "before scaling:\n";
+
         Point pr1(1, 1);
         Point pr2(-2, -2);
         Rectangle r1(pr1, pr2);
@@ -65,7 +65,6 @@ int main()
         RectTrapezoid rt(prt, 4, 5, 3);
         fillContainer(container, rt);
 
-
         CompositeShape cs1;
         cs1.add(std::make_unique<RectTrapezoid>(Point(1, 1), 4, 5, 3));
         cs1.add(std::make_unique<Ellipse>(Point(2, 2), 3, 4));
@@ -77,14 +76,11 @@ int main()
         scaleInContainer(container, 2);
 
         std::cout << "after scaling:" << std::endl;
-
         printCont(container);
-
-        /*CompositeShape cs2;
-        cs2.getCenter();*/
     }
     catch (const std::exception& e)
     {
-        std::cout << "error! " << e.what() << std::endl;
+        std::cerr << "error! " << e.what() << std::endl;
     }
+    return 0;
 }
