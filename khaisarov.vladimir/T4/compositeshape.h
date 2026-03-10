@@ -12,7 +12,6 @@ private:
 public:
     CompositeShape() = default;
     CompositeShape(std::vector<std::unique_ptr<Shape>>&& s);
-
     double getArea() const override;
     Point getCenter() const override;
     std::string getName() const override;
