@@ -1,5 +1,6 @@
 #include "ring.h"
 #include <cmath>
+#include <stdexcept>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -8,7 +9,7 @@
 Ring::Ring(const Point& center, double outerRadius, double innerRadius)
     : center(center), outerRadius(outerRadius), innerRadius(innerRadius) {
     if (outerRadius <= innerRadius) {
-        outerRadius = innerRadius + 1.0;
+        this->outerRadius = innerRadius + 1.0;
     }
 }
 
