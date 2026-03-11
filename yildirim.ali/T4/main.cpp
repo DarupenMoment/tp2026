@@ -12,10 +12,10 @@ void printShapesInfo(const std::vector<std::unique_ptr<Shape>>& shapes) {
         Point center = shape->getCenter();
         if (shape->getName() == "COMPOSITE") {
             std::cout << "[" << shape->getName() << ", ("
-            << std::fixed << std::setprecision(2) << center.x << ", "
-            << std::setprecision(2) << center.y << "), "
-            << std::setprecision(2) << shape->getArea() << ":"
-            << std::endl;
+                      << std::fixed << std::setprecision(2) << center.x << ", "
+                      << std::setprecision(2) << center.y << "), "
+                      << std::setprecision(2) << shape->getArea() << ":"
+                      << std::endl;
             const CompositeShape* composite = dynamic_cast<const CompositeShape*>(shape.get());
             if (composite) {
                 const auto& innerShapes = composite->getShapes();
@@ -23,9 +23,9 @@ void printShapesInfo(const std::vector<std::unique_ptr<Shape>>& shapes) {
                     const auto& innerShape = innerShapes[i];
                     Point innerCenter = innerShape->getCenter();
                     std::cout << " " << innerShape->getName() << ", ("
-                    << std::fixed << std::setprecision(2) << innerCenter.x << ", "
-                    << std::setprecision(2) << innerCenter.y << "), "
-                    << std::setprecision(2) << innerShape->getArea();
+                              << std::fixed << std::setprecision(2) << innerCenter.x << ", "
+                              << std::setprecision(2) << innerCenter.y << "), "
+                              << std::setprecision(2) << innerShape->getArea();
                     if (i < innerShapes.size() - 1) {
                         std::cout << ",";
                     }
@@ -35,14 +35,19 @@ void printShapesInfo(const std::vector<std::unique_ptr<Shape>>& shapes) {
             std::cout << "]" << std::endl;
         } else {
             std::cout << "[" << shape->getName() << ", ("
-            << std::fixed << std::setprecision(2) << center.x << ", "
-            << std::setprecision(2) << center.y << "), "
-            << std::setprecision(2) << shape->getArea() << "]"
-            << std::endl;
+                      << std::fixed << std::setprecision(2) << center.x << ", "
+                      << std::setprecision(2) << center.y << "), "
+                      << std::setprecision(2) << shape->getArea() << "]"
+                      << std::endl;
         }
     }
 }
 int main() {
+    double factor;
+    if (!(std::cin >> factor)) {
+        std::cerr << "Shapes descripton withot scaling, non-zero exit code and error message in standard error" << std::endl;
+        return 2;
+    }
     std::vector<std::unique_ptr<Shape>> shapes;
 
     shapes.push_back(std::make_unique<Rectangle>(Point(0, 0), Point(4, 3)));
@@ -71,18 +76,17 @@ int main() {
             std::cout << "OUTSIDE" << std::endl;
         }
     }
-    std::cout << "\n=== BONUS 2: PERIMETER TEST ===" << std::endl;
+    std::cout << "\n=== BONUS 2: PERIMETER TEST ===" << std::endl;  
     std::cout << "Perimeter of each shape:" << std::endl;
     for (size_t i = 0; i < shapes.size(); ++i) {
         std::cout << " Shape " << i << " (" << shapes[i]->getName() << "): "
-        << std::fixed << std::setprecision(2) << shapes[i]->getPerimeter()
-        << std::endl;
+                  << std::fixed << std::setprecision(2) << shapes[i]->getPerimeter()
+                  << std::endl;
     }
     std::cout << "\n* For ellipse, Ramanujan's approximation formula is used." << std::endl;
-
-    std::cout << "\n--- SCALING BY FACTOR 2.0 ---" << std::endl;
+    std::cout << "\n--- SCALING BY FACTOR " << std::fixed << std::setprecision(1) << factor << " ---" << std::endl;
     for (auto& shape : shapes) {
-        shape->scale(2.0);
+        shape->scale(factor);
     }
     std::cout << "\n=== AFTER SCALING ===" << std::endl;
     printShapesInfo(shapes);
