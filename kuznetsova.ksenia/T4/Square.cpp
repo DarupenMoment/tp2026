@@ -27,4 +27,8 @@ void Square::scale(double factor) {
 
 std::string Square::getName() const {
     return "SQUARE";
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main

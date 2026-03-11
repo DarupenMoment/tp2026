@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 #pragma once
+=======
+#ifndef POINT_H
+#define POINT_H
+>>>>>>> main
 
 struct Point
 {
@@ -8,3 +13,8 @@ struct Point
     Point() = default;
     Point(double xval, double yval) : x(xval), y(yval) {};
 };
+<<<<<<< HEAD
+=======
+
+#endif // POINT_H
+>>>>>>> main
