@@ -7,11 +7,8 @@
 #include "composite_shape.h"
 
 int main(int argc, char* argv[]) {
-   (void)argv;
-   if (argc == 1) {
-        std::cerr << "Error: No input arguments provided" << std::endl;
-        return 1;
-    }
+    (void)argv;
+
     std::vector<std::unique_ptr<Shape>> scene;
 
     scene.push_back(std::make_unique<Rectangle>(Point{ 0, 0 }, Point{ 2, 2 }));
@@ -38,6 +35,11 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < scene.size(); i++) {
         scene[i]->print();
         std::cout << "\n";
+    }
+
+    if (argc == 1) {
+        std::cerr << "Error: No input arguments provided" << std::endl;
+        return 1;
     }
 
     return 0;
