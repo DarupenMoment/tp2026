@@ -1,8 +1,6 @@
 #include "Composite_shape.h"
 void CompositeShape::addShape(std::unique_ptr<Shape> shape)
-{
-    shapes.push_back(std::move(shape));
-}
+{ shapes.push_back(std::move(shape)); }
 double CompositeShape::getArea()
 {
     double total = 0;
@@ -117,17 +115,11 @@ double CompositeShape::getY_max()
 }
 void CompositeShape::print()
 {
-    Point center = this->getCenter();
-    std::cout << "[" << this->getName() << ", ("
-    << center.x << ", " << center.y << "), "
-    << this->getArea() << ":\n";
-
+    std::cout << "[" << getName() << ", (" << getCenter().x << ", " << getCenter().y << "), " << getArea() << ":\n";
     for (size_t i = 0; i < shapes.size(); i++)
     {
-        std::cout << "  " << shapes[i]->getName() << ", ("
-        << shapes[i]->getCenter().x << ", "
-        << shapes[i]->getCenter().y  << "), "
-        << shapes[i]->getArea() << ",\n";
+        std::cout << "  " << shapes[i]->getName() << ", (" << shapes[i]->getCenter().x
+        << ", " << shapes[i]->getCenter().y << "), " << shapes[i]->getArea() << ";\n";
     }
     std::cout << "]\n";
 }
