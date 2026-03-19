@@ -1,7 +1,12 @@
 #include "rectangle.h"
+#include <stdexcept>
 
 Rectangle::Rectangle(const Point& bottomLeft, const Point& topRight)
     : bottomLeft_(bottomLeft), topRight_(topRight) {
+
+    if (bottomLeft_.x >= topRight_.x || bottomLeft_.y >= topRight_.y) {
+        throw std::invalid_argument("Bottom left must be left and below top right");
+    }
 }
 
 double Rectangle::getArea() const {
