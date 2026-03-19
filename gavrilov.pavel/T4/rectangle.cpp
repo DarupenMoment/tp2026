@@ -1,40 +1,44 @@
 #include "rectangle.h"
-#include <stdexcept>
-#include <cmath>
 
 Rectangle::Rectangle(const Point& bottomLeft, const Point& topRight)
-    : bottomLeft(bottomLeft), topRight(topRight) {
-    if (bottomLeft.x >= topRight.x || bottomLeft.y >= topRight.y) {
-        throw std::invalid_argument("Invalid rectangle coordinates: bottomLeft must be < topRight");
-    }
+    : bottomLeft_(bottomLeft), topRight_(topRight) {
 }
 
 double Rectangle::getArea() const {
-    double width = topRight.x - bottomLeft.x;
-    double height = topRight.y - bottomLeft.y;
+    double width = topRight_.x - bottomLeft_.x;
+    double height = topRight_.y - bottomLeft_.y;
     return width * height;
 }
 
 Point Rectangle::getCenter() const {
     return Point(
-        (bottomLeft.x + topRight.x) / 2,
-        (bottomLeft.y + topRight.y) / 2
+        (bottomLeft_.x + topRight_.x) / 2,
+        (bottomLeft_.y + topRight_.y) / 2
     );
 }
 
 void Rectangle::move(double dx, double dy) {
-    bottomLeft.x += dx;
-    bottomLeft.y += dy;
-    topRight.x += dx;
-    topRight.y += dy;
+    bottomLeft_.x += dx;
+    bottomLeft_.y += dy;
+    topRight_.x += dx;
+    topRight_.y += dy;
 }
 
 void Rectangle::scale(double factor) {
     Point center = getCenter();
-    bottomLeft.x = center.x + (bottomLeft.x - center.x) * factor;
-    bottomLeft.y = center.y + (bottomLeft.y - center.y) * factor;
-    topRight.x = center.x + (topRight.x - center.x) * factor;
-    topRight.y = center.y + (topRight.y - center.y) * factor;
+
+    Point newBottomLeft(
+        center.x + (bottomLeft_.x - center.x) * factor,
+        center.y + (bottomLeft_.y - center.y) * factor
+    );
+
+    Point newTopRight(
+        center.x + (topRight_.x - center.x) * factor,
+        center.y + (topRight_.y - center.y) * factor
+    );
+
+    bottomLeft_ = newBottomLeft;
+    topRight_ = newTopRight;
 }
 
 std::string Rectangle::getName() const {
