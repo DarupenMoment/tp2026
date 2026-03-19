@@ -70,7 +70,7 @@ void CompositeShape::print(std::ostream& stream) const {
     stream << std::fixed << std::setprecision(2) << "[COMPOSITE, (" << this->getCenter().x_ << ", " <<
         this->getCenter().y_ << "), " << this->getArea() << ":";
     for (const auto& s : shapes_) {
-        stream << "\n " << s->getName() << ", (" << s->getCenter().x_ << ", " << 
+        stream << "\n " << s->getName() << ", (" << s->getCenter().x_ << ", " <<
             s->getCenter().y_ << "), " << s->getArea() << ";";
     }
     stream << "\n]\n";
