@@ -1,8 +1,12 @@
 #include "composite_shape.h"
 #include <algorithm>
 #include <cstdio>
+#include <stdexcept>  
 
 void CompositeShape::addShape(Shape* shape) {
+    if (shape == nullptr) {
+        throw std::invalid_argument("Cannot add nullptr shape");
+    }
     shapes_.push_back(std::unique_ptr<Shape>(shape));
 }
 
@@ -17,20 +21,18 @@ double CompositeShape::getArea() const {
 Point CompositeShape::getCenter() const {
     if (shapes_.empty()) return Point(0, 0);
 
-    double minX = shapes_[0]->getCenter().x;
-    double minY = shapes_[0]->getCenter().y;
-    double maxX = minX;
-    double maxY = minY;
+    double totalArea = getArea();
+    if (totalArea == 0) return Point(0, 0);
 
+    double weightedX = 0, weightedY = 0;
     for (const auto& shape : shapes_) {
+        double area = shape->getArea();
         Point center = shape->getCenter();
-        minX = std::min(minX, center.x);
-        minY = std::min(minY, center.y);
-        maxX = std::max(maxX, center.x);
-        maxY = std::max(maxY, center.y);
+        weightedX += center.x * area;
+        weightedY += center.y * area;
     }
 
-    return Point((minX + maxX) / 2, (minY + maxY) / 2);
+    return Point(weightedX / totalArea, weightedY / totalArea);
 }
 
 void CompositeShape::move(double dx, double dy) {
@@ -40,17 +42,20 @@ void CompositeShape::move(double dx, double dy) {
 }
 
 void CompositeShape::scale(double factor) {
-    Point compositeCenter = getCenter();
+    if (factor <= 0) {
+        throw std::invalid_argument("Scale factor must be positive");
+    }
+
+    Point center = getCenter();  
 
     for (auto& shape : shapes_) {
         Point shapeCenter = shape->getCenter();
 
-        Point newCenter(
-            compositeCenter.x + (shapeCenter.x - compositeCenter.x) * factor,
-            compositeCenter.y + (shapeCenter.y - compositeCenter.y) * factor
+        shape->move(
+            (shapeCenter.x - center.x) * (factor - 1),
+            (shapeCenter.y - center.y) * (factor - 1)
         );
 
-        shape->move(newCenter.x - shapeCenter.x, newCenter.y - shapeCenter.y);
         shape->scale(factor);
     }
 }
