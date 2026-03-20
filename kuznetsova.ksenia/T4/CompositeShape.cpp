@@ -37,23 +37,27 @@ void CompositeShape::getBoundingBox(Point& min, Point& max) const {
 }
 
 double CompositeShape::getArea() const {
-    double total = 0;
+    double totalArea = 0.0;
     for (const auto& shape : shapes_) {
-        total += shape->getArea();
+        totalArea += shape->getArea();
     }
-    return total;
+    return totalArea;  
 }
 
 Point CompositeShape::getCenter() const {
+    if (shapes_.empty()) {
+        return Point(0.0, 0.0); 
+    }
     Point min, max;
     getBoundingBox(min, max);
-    return Point((min.x + max.x) / 2, (min.y + max.y) / 2);
+    return Point((min.x + max.x) / 2.0, (min.y + max.y) / 2.0);
 }
 
-void CompositeShape::move(double dx, double dy) {
-    for (auto& shape : shapes_) {
-        shape->move(dx, dy);
+Shape* CompositeShape::getShape(size_t index) const {
+    if (index >= shapes_.size()) {
+        throw std::out_of_range("Error: Shape index out of range.");
     }
+    return shapes_[index].get();
 }
 
 void CompositeShape::scale(double factor) {

@@ -14,7 +14,7 @@ Ring::Ring(const Point& center, double outRad, double inRad)
     if (outR_ <= 0) {
         throw std::invalid_argument("Error: Outer radius must be positive.");
     }
-    if (inR_ < 0) {
+    if (inR_ < 0) {  
         throw std::invalid_argument("Error: Inner radius cannot be negative.");
     }
     if (inR_ >= outR_) {

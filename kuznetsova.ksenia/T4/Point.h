@@ -10,4 +10,4 @@ struct Point
     Point(double xval, double yval) : x(xval), y(yval) {};
 };
 
-#endif // POINT_H
+#endif
