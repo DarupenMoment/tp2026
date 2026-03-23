@@ -6,10 +6,10 @@
 class Rectangle : public Shape
 {
 private:
-    Point bottomLeft_;
-    Point topRight_;
+    Point corner1_;
+    Point corner2_;
 public:
-    Rectangle(const Point& bottomLeft, const Point& topRight);
+    Rectangle(const Point& corner1, const Point& corner2);
 
     double getArea() const override;
     Point getCenter() const override;
