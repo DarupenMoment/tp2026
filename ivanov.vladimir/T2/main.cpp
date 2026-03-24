@@ -3,9 +3,7 @@
 #include <string>
 #include <iterator>
 #include <algorithm>
-#include <cassert>
 #include <limits>
-#include <sstream>
 
 struct DataStruct {
     unsigned long long key1;
@@ -100,20 +98,21 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
     std::istream::sentry sentry(in);
     if (!sentry) return in;
     DataStruct temp;
-    if (!(in >> DelimiterIO{'('} >> DelimiterIO{':'})) return in;
+    if (!(in >> DelimiterIO{'('})) return in;
 
     for (int i = 0; i < 3; ++i) {
-        std::string key;
-        std::getline(in, key, ' ');
-        if (key == "key1") in >> UllLitIO{temp.key1};
-        else if (key == "key2") in >> UllBinIO{temp.key2};
-        else if (key == "key3") in >> StringIO{temp.key3};
-        else { in.setstate(std::ios::failbit); break; }
+        if (!(in >> DelimiterIO{':'})) return in;
+        std::string label;
+        char c;
+        while (in.get(c) && c != ' ') label += c;
 
-        if (!(in >> DelimiterIO{':'})) break;
+        if (label == "key1") in >> UllLitIO{temp.key1};
+        else if (label == "key2") in >> UllBinIO{temp.key2};
+        else if (label == "key3") in >> StringIO{temp.key3};
+        else { in.setstate(std::ios::failbit); return in; }
     }
 
-    if (!(in >> DelimiterIO{')'})) return in;
+    if (!(in >> DelimiterIO{':'} >> DelimiterIO{')'})) return in;
     if (in) dest = std::move(temp);
     return in;
 }
@@ -131,8 +130,8 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
             temp /= 2;
         }
         std::reverse(s.begin(), s.end());
-        if (s == "1") out << "01";
-        else out << s;
+        if (src.key2 == 1 && s == "1") out << "0";
+        out << s;
     }
     out << ":key3 \"" << src.key3 << "\":)";
     return out;
@@ -146,7 +145,7 @@ bool compareDS(const DataStruct& a, const DataStruct& b) {
 
 int main() {
     std::vector<DataStruct> data;
-    while (std::cin) {
+    while (!std::cin.eof()) {
         std::copy(std::istream_iterator<DataStruct>(std::cin),
                   std::istream_iterator<DataStruct>(),
                   std::back_inserter(data));
