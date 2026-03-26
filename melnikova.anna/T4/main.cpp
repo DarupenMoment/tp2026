@@ -30,11 +30,12 @@ static void printComposite(const CompositeShape& cs)
 }
 int main()
 {
-    if (!(std::cin >> std::ws)) {
-        return 0;
-    }
     double coeff;
     if (!(std::cin >> coeff)) {
+        if (std::cin.eof()) {
+            return 0;
+        }
+        std::cerr << "error" << std::endl;
         return 1;
     }
     std::cout << std::fixed << std::setprecision(2);
