@@ -1,11 +1,11 @@
 #include "rectangle.h"
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 
 Rectangle::Rectangle(const Point& bl, const Point& tr) : bottomLeft(bl), topRight(tr) {
     if (bl.x >= tr.x || bl.y >= tr.y) {
-        std::cerr << "Error: invalid rectangle coordinates" << std::endl;
-        exit(1);
+        throw std::invalid_argument("Error: invalid rectangle coordinates");
     }
 }
 double Rectangle::getArea() const {
@@ -26,8 +26,7 @@ void Rectangle::move(double dx, double dy) {
 }
 void Rectangle::scale(double factor) {
     if (factor <= 0) {
-        std::cerr << "Error: scale factor must be positive" << std::endl;
-        exit(1);
+        throw std::invalid_argument("scale factor must be positive");
     }
     Point center = getCenter();
     bottomLeft.x = center.x + (bottomLeft.x - center.x) * factor;
@@ -46,5 +45,9 @@ double Rectangle::getPerimeter() const {
 bool Rectangle::containsPoint(const Point& p) const {
     return (p.x >= bottomLeft.x && p.x <= topRight.x &&
             p.y >= bottomLeft.y && p.y <= topRight.y);
+}
+void Rectangle::getBoundingBox(Point& min, Point& max) const {
+    min = bottomLeft;
+    max = topRight;
 }
 //

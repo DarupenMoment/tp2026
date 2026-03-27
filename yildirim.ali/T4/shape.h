@@ -17,6 +17,7 @@ public:
     virtual std::string getName() const = 0;
     virtual bool containsPoint(const Point& p) const = 0;
     virtual double getPerimeter() const = 0;
+    virtual void getBoundingBox(Point& min, Point& max) const = 0;
 };
 
 #endif

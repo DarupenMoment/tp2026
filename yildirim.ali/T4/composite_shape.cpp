@@ -1,7 +1,10 @@
 #include "composite_shape.h"
+#include "rectangle.h"
+#include "square.h"
+#include "ellipse.h"
 #include <algorithm>
 #include <limits>
-#include <iostream>
+#include <stdexcept>
 
 void CompositeShape::addShape(std::unique_ptr<Shape> shape) {
     shapes.push_back(std::move(shape));
@@ -16,13 +19,14 @@ void CompositeShape::getBoundingBox(Point& min, Point& max) const {
     double minY = std::numeric_limits<double>::max();
     double maxX = std::numeric_limits<double>::lowest();
     double maxY = std::numeric_limits<double>::lowest();
-
     for (const auto& shape : shapes) {
-        Point center = shape->getCenter();
-        minX = std::min(minX, center.x);
-        minY = std::min(minY, center.y);
-        maxX = std::max(maxX, center.x);
-        maxY = std::max(maxY, center.y);
+        Point shapeMin, shapeMax;
+        shape->getBoundingBox(shapeMin, shapeMax);
+        
+        minX = std::min(minX, shapeMin.x);
+        minY = std::min(minY, shapeMin.y);
+        maxX = std::max(maxX, shapeMax.x);
+        maxY = std::max(maxY, shapeMax.y);
     }
     min = Point(minX, minY);
     max = Point(maxX, maxY);
@@ -49,8 +53,7 @@ void CompositeShape::move(double dx, double dy) {
 }
 void CompositeShape::scale(double factor) {
     if (factor <= 0) {
-        std::cerr << "Error: scale factor must be positive" << std::endl;
-        exit(1);
+        throw std::invalid_argument("scale factor must be positive");
     }
     if (shapes.empty()) return;
 

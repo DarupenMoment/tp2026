@@ -16,6 +16,7 @@ public:
     std::string getName() const override;
     bool containsPoint(const Point& p) const override;
     double getPerimeter() const override;
+    void getBoundingBox(Point& min, Point& max) const override;
 };
 
 #endif

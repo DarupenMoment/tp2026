@@ -1,11 +1,11 @@
 #include "ellipse.h"
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 Ellipse::Ellipse(const Point& c, double r_x, double r_y) : center(c), rx(r_x), ry(r_y) {
     if (r_x <= 0 || r_y <= 0) {
-        std::cerr << "Error: radii must be positive" << std::endl;
-        exit(1);
+        throw std::invalid_argument("Error: radii must be positive");
     }
 }
 double Ellipse::getArea() const {
@@ -20,8 +20,7 @@ void Ellipse::move(double dx, double dy) {
 }
 void Ellipse::scale(double factor) {
     if (factor <= 0) {
-        std::cerr << "Error: scale factor must be positive" << std::endl;
-        exit(1);
+        throw std::invalid_argument("scale factor must be positive");
     }
     rx *= factor;
     ry *= factor;
@@ -38,5 +37,9 @@ double Ellipse::getPerimeter() const {
     double sum = rx + ry;
     double h = ((rx - ry) * (rx - ry)) / (sum * sum);
     return M_PI * sum * (1 + (3 * h) / (10 + std::sqrt(4 - 3 * h)));
+}
+void Ellipse::getBoundingBox(Point& min, Point& max) const {
+    min = Point(center.x - rx, center.y - ry);
+    max = Point(center.x + rx, center.y + ry);
 }
 //
