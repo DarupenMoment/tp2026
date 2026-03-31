@@ -5,7 +5,6 @@
 #include <iterator>
 #include <algorithm>
 #include <iomanip>
-#include <limits>
 
 namespace nspace {
     struct DataStruct {
@@ -20,94 +19,56 @@ namespace nspace {
     struct BinUllIO { unsigned long long& ref; };
     struct StringIO { std::string& ref; };
 
-    std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
-    std::istream& operator>>(std::istream& in, KeyIO&& dest);
-    std::istream& operator>>(std::istream& in, DoubleIO&& dest);
-    std::istream& operator>>(std::istream& in, BinUllIO&& dest);
-    std::istream& operator>>(std::istream& in, StringIO&& dest);
-    std::istream& operator>>(std::istream& in, DataStruct& dest);
-    std::ostream& operator<<(std::ostream& out, const DataStruct& dest);
-
-    void printBinary(std::ostream& out, unsigned long long n);
-    bool compare_data(const DataStruct& a, const DataStruct& b);
-
-    class iofmtguard {
-    public:
-        iofmtguard(std::basic_ios<char>& s) : s_(s), fmt_(s.flags()), prec_(s.precision()) {}
-        ~iofmtguard() { s_.flags(fmt_); s_.precision(prec_); }
-    private:
-        std::basic_ios<char>& s_;
-        std::ios_base::fmtflags fmt_;
-        std::streamsize prec_;
-    };
-}
-
-int main() {
-    using nspace::DataStruct;
-
-    std::vector<DataStruct> vec;
-
-    std::copy(
-        std::istream_iterator<DataStruct>(std::cin),
-    std::istream_iterator<DataStruct>(),
-    std::back_inserter(vec)
-    );
-
-    std::sort(vec.begin(), vec.end(), nspace::compare_data);
-
-    std::cout << "Found " << vec.size() << " elements:\n";
-    for (const auto& x : vec) {
-        std::cout << x << "\n";
-    }
-
-    return 0;
-}
-
-namespace nspace {
+    // Пропуск разделителей с игнорированием пробелов
     std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
+        std::istream::sentry sentry(in);
+        if (!sentry) return in;
         char c;
-        if ((in >> c) && (c != dest.exp)) in.setstate(std::ios::failbit);
+        in >> c;
+        if (in && std::tolower(c) != std::tolower(dest.exp)) {
+            in.setstate(std::ios::failbit);
+        }
         return in;
     }
 
+    // Чтение ключа без фиксации на количестве символов
     std::istream& operator>>(std::istream& in, KeyIO&& dest) {
+        std::istream::sentry sentry(in);
+        if (!sentry) return in;
         dest.ref.clear();
         char c;
-        for (int i = 0; i < 4; ++i) {
-            if (in >> c) dest.ref += c;
+        while (in >> c && std::isalnum(c)) {
+            dest.ref += c;
+            if (!std::isalnum(in.peek())) break;
         }
-
-        if (in.get() != ' ') in.setstate(std::ios::failbit);
         return in;
     }
 
     std::istream& operator>>(std::istream& in, DoubleIO&& dest) {
-        in >> dest.ref;
+        if (!(in >> dest.ref)) return in;
+        if (std::tolower(in.peek()) == 'd') in.get(); // Пропуск суффикса d
         return in;
     }
 
     std::istream& operator>>(std::istream& in, BinUllIO&& dest) {
-        char c1, c2;
-        if (!(in >> c1 >> c2) || c1 != '0' || c2 != 'b') {
+        std::istream::sentry sentry(in);
+        if (!sentry) return in;
+        std::string prefix(2, '\0');
+        in >> prefix[0] >> prefix[1];
+        if (prefix == "0b" || prefix == "0B") {
+            std::string bits;
+            while (std::isdigit(in.peek())) bits += (char)in.get();
+            try { dest.ref = std::stoull(bits, nullptr, 2); }
+            catch (...) { in.setstate(std::ios::failbit); }
+        } else {
             in.setstate(std::ios::failbit);
-            return in;
         }
-        std::string bits;
-        while (std::isdigit(in.peek())) {
-            bits += static_cast<char>(in.get());
-        }
-        if (bits.empty()) in.setstate(std::ios::failbit);
-
-        else dest.ref = std::stoull(bits, nullptr, 2);
         return in;
     }
 
     std::istream& operator>>(std::istream& in, StringIO&& dest) {
         char c;
-        if (!(in >> c) || c != '"') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
+        if (!(in >> c) || c != '"') return in.setstate(std::ios::failbit), in;
         std::getline(in, dest.ref, '"');
         return in;
     }
@@ -115,50 +76,33 @@ namespace nspace {
     std::istream& operator>>(std::istream& in, DataStruct& dest) {
         std::istream::sentry sentry(in);
         if (!sentry) return in;
-
         DataStruct temp;
-        in >> DelimiterIO{'('} >> DelimiterIO{':'};
+        if (!(in >> DelimiterIO{'('} >> DelimiterIO{':'})) return in;
 
         for (int i = 0; i < 3; ++i) {
             std::string key;
             in >> KeyIO{key};
-
             if (key == "key1") in >> DoubleIO{temp.key1};
             else if (key == "key2") in >> BinUllIO{temp.key2};
             else if (key == "key3") in >> StringIO{temp.key3};
-            else in.setstate(std::ios::failbit);
-
+            else { in.setstate(std::ios::failbit); break; }
             in >> DelimiterIO{':'};
         }
-
-        in >> DelimiterIO{')'};
-
-        if (in) dest = temp;
+        if (in >> DelimiterIO{')'}) dest = temp;
         return in;
     }
 
     std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
-        iofmtguard guard(out);
-        out << "(:key1 "
-        << std::scientific
-        << std::uppercase
-        << std::setprecision(1)
-        << src.key1;
-        out << ":key2 ";
-        printBinary(out, src.key2);
+        out << "(:key1 " << std::scientific << std::setprecision(1) << std::uppercase << src.key1;
+        out << ":key2 0b" << (src.key2 == 0 ? "0" : ""); // Упрощенный вывод для примера
+        if (src.key2 > 0) {
+            std::string b;
+            for (unsigned long long n = src.key2; n > 0; n /= 2) b += (n % 2 ? '1' : '0');
+            std::reverse(b.begin(), b.end());
+            out << b;
+        }
         out << ":key3 \"" << src.key3 << "\":)";
         return out;
-    }
-
-    void printBinary(std::ostream& out, unsigned long long n) {
-        if (n == 0) { out << "0b0"; return; }
-        std::string s = "";
-        unsigned long long temp = n;
-        while (temp > 0) {
-            s = (temp % 2 == 0 ? "0" : "1") + s;
-            temp /= 2;
-        }
-        out << "0b" << s;
     }
 
     bool compare_data(const DataStruct& a, const DataStruct& b) {
@@ -166,4 +110,31 @@ namespace nspace {
         if (a.key2 != b.key2) return a.key2 < b.key2;
         return a.key3.length() < b.key3.length();
     }
+}
+
+int main() {
+    std::vector<nspace::DataStruct> data;
+    std::string line;
+
+    while (std::getline(std::cin, line)) {
+        if (line.empty()) continue;
+        std::istringstream iss(line);
+        // Используем std::copy, как в твоем исходном коде
+        std::copy(
+            std::istream_iterator<nspace::DataStruct>(iss),
+            std::istream_iterator<nspace::DataStruct>(),
+            std::back_inserter(data)
+        );
+    }
+
+    std::sort(data.begin(), data.end(), nspace::compare_data);
+
+    // Вывод также через std::copy
+    std::copy(
+        data.begin(),
+        data.end(),
+        std::ostream_iterator<nspace::DataStruct>(std::cout, "\n")
+    );
+
+    return 0;
 }
