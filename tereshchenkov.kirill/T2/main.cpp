@@ -19,7 +19,6 @@ namespace nspace {
     struct BinUllIO { unsigned long long& ref; };
     struct StringIO { std::string& ref; };
 
-    // Пропуск разделителей с игнорированием пробелов
     std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
         std::istream::sentry sentry(in);
         if (!sentry) return in;
@@ -31,7 +30,6 @@ namespace nspace {
         return in;
     }
 
-    // Чтение ключа без фиксации на количестве символов
     std::istream& operator>>(std::istream& in, KeyIO&& dest) {
         std::istream::sentry sentry(in);
         if (!sentry) return in;
@@ -46,7 +44,7 @@ namespace nspace {
 
     std::istream& operator>>(std::istream& in, DoubleIO&& dest) {
         if (!(in >> dest.ref)) return in;
-        if (std::tolower(in.peek()) == 'd') in.get(); // Пропуск суффикса d
+        if (std::tolower(in.peek()) == 'd') in.get();
         return in;
     }
 
@@ -94,7 +92,7 @@ namespace nspace {
 
     std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
         out << "(:key1 " << std::scientific << std::setprecision(1) << std::uppercase << src.key1;
-        out << ":key2 0b" << (src.key2 == 0 ? "0" : ""); // Упрощенный вывод для примера
+        out << ":key2 0b" << (src.key2 == 0 ? "0" : "");
         if (src.key2 > 0) {
             std::string b;
             for (unsigned long long n = src.key2; n > 0; n /= 2) b += (n % 2 ? '1' : '0');
@@ -119,7 +117,6 @@ int main() {
     while (std::getline(std::cin, line)) {
         if (line.empty()) continue;
         std::istringstream iss(line);
-        // Используем std::copy, как в твоем исходном коде
         std::copy(
             std::istream_iterator<nspace::DataStruct>(iss),
             std::istream_iterator<nspace::DataStruct>(),
@@ -129,7 +126,6 @@ int main() {
 
     std::sort(data.begin(), data.end(), nspace::compare_data);
 
-    // Вывод также через std::copy
     std::copy(
         data.begin(),
         data.end(),
