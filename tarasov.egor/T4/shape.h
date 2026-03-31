@@ -2,6 +2,7 @@
 #define SHAPE_H
 #include <string>
 #include <iomanip>
+#include "point.h"
 
 class Shape {
 public:
