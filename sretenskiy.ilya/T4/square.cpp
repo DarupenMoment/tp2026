@@ -1,6 +1,10 @@
 #include "square.h"
-
-Square::Square(const Point& bl, double s) : bottomLeft(bl), side(s) {}
+#include <stdexcept>
+Square::Square(const Point& bl, double s) : bottomLeft(bl), side(s) {
+    if (s <= 0.0) {
+        throw std::invalid_argument("Square: side length must be positive");
+    }
+}
 
 double Square::getArea() const {
     return side * side;

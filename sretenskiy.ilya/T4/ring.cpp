@@ -3,6 +3,9 @@
 
 Ring::Ring(const Point& c, double outer, double inner)
     : center(c), outerRadius(outer), innerRadius(inner) {
+    if (outer <= 0.0 || inner <= 0.0) {
+        throw std::invalid_argument("Ring: radii must be positive");
+    }
     if (innerRadius >= outerRadius) {
         throw std::invalid_argument("Inner radius must be less than outer radius");
     }

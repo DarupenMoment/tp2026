@@ -1,6 +1,10 @@
 #include "rectangle.h"
-
-Rectangle::Rectangle(const Point& bl, const Point& tr) : bottomLeft(bl), topRight(tr) {}
+#include <stdexcept>
+Rectangle::Rectangle(const Point& bl, const Point& tr) : bottomLeft(bl), topRight(tr) {
+    if (bl.x >= tr.x || bl.x >= tr.y) {
+        throw std::invalid_argument("rectangle: bottom-left must be less than top-right in both coordinates");
+    }
+}
 
 double Rectangle::getArea() const {
     double width = topRight.x - bottomLeft.x;
