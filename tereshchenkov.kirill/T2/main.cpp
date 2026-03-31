@@ -100,7 +100,7 @@ namespace nspace {
         }
         std::string bits;
         while (std::isdigit(in.peek())) {
-            bits += (char)in.get();
+            bits += static_cast<char>(in.get());
         }
         if (bits.empty()) in.setstate(std::ios::failbit);
 
