@@ -1,24 +1,24 @@
-#ifndef SQUARE_H
-#define SQUARE_H
+#ifndefSQUARE_H
+#defineSQUARE_H
 
-#include "Shape.h"
-#include "Point.h"
-#include <memory>
+#include"Shape.h"
+#include"Point.h"
+#include<memory>
 
-class Square : public Shape {
+classSquare:publicShape{
 public:
-Square(const Point& bottomLeft, double side);
+Square(constPoint&bottomLeft,doubleside);
 
-double getArea() const override;
-Point getCenter() const override;
-void move(double dx, double dy) override;
-void scale(double factor) override;
-std::string getName() const override;
-std::unique_ptr<Shape> clone() const override;
+doublegetArea()constoverride;
+PointgetCenter()constoverride;
+voidmove(doubledx,doubledy)override;
+voidscale(doublefactor)override;
+std::stringgetName()constoverride;
+std::unique_ptr<Shape>clone()constoverride;
 
 private:
-Point bottomLeft_;
-double side_;
+PointbottomLeft_;
+doubleside_;
 };
 
 #endif

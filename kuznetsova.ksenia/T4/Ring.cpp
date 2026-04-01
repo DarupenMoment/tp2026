@@ -1,21 +1,22 @@
 #include "Ring.h"
+#include "Point.h"
 #include <cmath>
 #include <stdexcept>
 #include <string>
-#include <memory>
 
-#ifndef M_PI
 #define M_PI 3.14159265358979323846
-#endif
 
 Ring::Ring(const Point& center, double outRad, double inRad)
 : center_(center), outR_(outRad), inR_(inRad) {
-if (outR_ <= 0 || inR_ < 0) {
-throw std::invalid_argument("Invalid radii values.");
-}
 
-if (outR_ <= inR_) {
-throw std::invalid_argument("Outer radius must be greater than inner radius.");
+if (outR_ <= 0) {
+throw std::invalid_argument("Error: Outer radius must be positive.");
+}
+if (inR_ < 0) {
+throw std::invalid_argument("Error: Inner radius cannot be negative.");
+}
+if (inR_ >= outR_) {
+throw std::invalid_argument("Error: Inner radius must be less than outer radius.");
 }
 }
 
@@ -34,24 +35,12 @@ center_.y += dy;
 
 void Ring::scale(double factor) {
 if (factor <= 0) {
-throw std::invalid_argument("Scale factor must be positive.");
+throw std::invalid_argument("Error: Scale factor must be positive.");
 }
-
-double newOutR = outR_ * factor;
-double newInR = inR_ * factor;
-
-if (newOutR <= newInR) {
-throw std::invalid_argument("Scaling violates radii ratio.");
-}
-
-outR_ = newOutR;
-inR_ = newInR;
+outR_ *= factor;
+inR_ *= factor;
 }
 
 std::string Ring::getName() const {
 return "RING";
-}
-
-std::unique_ptr<Shape> Ring::clone() const {
-return std::make_unique<Ring>(*this);
 }

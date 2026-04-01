@@ -1,24 +1,24 @@
-#ifndef RECTANGLE_H
-#define RECTANGLE_H
+#ifndefRECTANGLE_H
+#defineRECTANGLE_H
 
-#include "Shape.h"
-#include "Point.h"
-#include <memory>
+#include"Shape.h"
+#include"Point.h"
+#include<memory>
 
-class Rectangle : public Shape {
+classRectangle:publicShape{
 public:
-Rectangle(const Point& p1, const Point& p2);
+Rectangle(constPoint&p1,constPoint&p2);
 
-double getArea() const override;
-Point getCenter() const override;
-void move(double dx, double dy) override;
-void scale(double factor) override;
-std::string getName() const override;
-std::unique_ptr<Shape> clone() const override;
+doublegetArea()constoverride;
+PointgetCenter()constoverride;
+voidmove(doubledx,doubledy)override;
+voidscale(doublefactor)override;
+std::stringgetName()constoverride;
+std::unique_ptr<Shape>clone()constoverride;
 
 private:
-Point bottomLeft_;
-Point topRight_;
+PointbottomLeft_;
+PointtopRight_;
 };
 
 #endif
