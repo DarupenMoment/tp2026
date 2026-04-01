@@ -21,7 +21,6 @@ public:
     void scale(double factor) override;
     std::string getName() const override;
 
-    // help func
     Point getTopRight() const override {
         Point p = bottomLeft_;
         return Point(p.x_ + bottomBase_, p.y_ + height_);
@@ -36,4 +35,4 @@ private:
     double height_;
 };
 
-#endif // !ISOSCELESTRAPEZOID_H
+#endif
