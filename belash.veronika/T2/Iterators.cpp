@@ -52,13 +52,9 @@ bool parseDataStruct(const std::string& line, DataStruct& ds) {
     if (iss2.fail()) return false;
     std::string suffix2;
     iss2 >> suffix2;
-    if (suffix2.size() == 3) {
-        for (char& c : suffix2) c = std::tolower(c);
-        if (suffix2 != "u11" && suffix2 != "ull") return false;
-    }
-    else {
-        return false;
-    }
+    if (suffix2.empty()) return false;
+    for (char& c : suffix2) c = std::tolower(c);
+    if (suffix2 != "u11" && suffix2 != "ull") return false;
     std::string leftover2;
     iss2 >> leftover2;
     if (!leftover2.empty()) return false;
@@ -71,41 +67,29 @@ bool parseDataStruct(const std::string& line, DataStruct& ds) {
     return true;
 }
 
-std::ostream& operator<<(std::ostream& os, const DataStruct& ds) {
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(1) << ds.key1;
-    os << "(:key1 " << oss.str() << "d:key2 " << ds.key2 << "u11:key3 \""
-        << ds.key3 << "\":)";
-    return os;
-}
-
-std::istream& operator>>(std::istream& is, DataStruct& ds) {
-    std::string line;
-    if (!std::getline(is, line)) {
-        is.setstate(std::ios::failbit);
-        return is;
-    }
-    if (!parseDataStruct(line, ds)) {
-        is.setstate(std::ios::failbit);
-    }
-    return is;
-}
-
 int main() {
     std::vector<DataStruct> vec;
-    std::copy(std::istream_iterator<DataStruct>(std::cin),
-        std::istream_iterator<DataStruct>(),
-        std::back_inserter(vec));
+    std::string line;
 
-    std::sort(vec.begin(), vec.end(),
-        [](const DataStruct& a, const DataStruct& b) {
-            if (a.key1 != b.key1) return a.key1 < b.key1;
-            if (a.key2 != b.key2) return a.key2 < b.key2;
-            return a.key3.size() < b.key3.size();
-        });
+    while (std::getline(std::cin, line)) {
+        DataStruct ds;
+        if (parseDataStruct(line, ds)) {
+            vec.push_back(ds);
+        }
+    }
 
-    std::copy(vec.begin(), vec.end(),
-        std::ostream_iterator<DataStruct>(std::cout, "\n"));
+    if (vec.empty()) {
+        std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped" << '\n';
+    }
+    else {
+        std::sort(vec.begin(), vec.end(),
+            [](const DataStruct& a, const DataStruct& b) {
+                if (a.key1 != b.key1) return a.key1 < b.key1;
+                if (a.key2 != b.key2) return a.key2 < b.key2;
+                return a.key3.size() < b.key3.size();
+            });
+        std::cout << "Atleast one supported record type" << '\n';
+    }
 
     return 0;
 }
