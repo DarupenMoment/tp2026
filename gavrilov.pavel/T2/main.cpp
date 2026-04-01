@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cmath>
 #include <iomanip>
+#include <cctype>
 
 struct DataStruct
 {
@@ -78,9 +79,9 @@ std::istream& operator>>(std::istream& in, DataStruct& data)
         return in;
     }
 
-    // Пропускаем пустые строки и строки с неправильным форматом
     if (line.empty() || line.front() != '(' || line.back() != ')')
     {
+        in.setstate(std::ios::failbit);
         return in;
     }
 
@@ -154,8 +155,10 @@ std::istream& operator>>(std::istream& in, DataStruct& data)
     if (key1Ok && key2Ok && key3Ok)
     {
         data = result;
+        return in;
     }
-    // Для неподходящих строк ничего не делаем, просто возвращаем поток
+
+    in.setstate(std::ios::failbit);
     return in;
 }
 
