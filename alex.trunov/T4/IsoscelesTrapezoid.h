@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include "Shape.h"
-#include "Rectangle.h"
 #include "Point.h"
 
 #ifndef ISOSCELESTRAPEZOID_H
@@ -13,7 +12,8 @@ public:
     IsoscelesTrapezoid(Point p, double a, double b, double c) :
         bottomLeft_(p), bottomBase_(a),
         topBase_(b), height_(c)
-    { }
+    {
+    }
 
     double getArea() const override;
     Point getCenter() const override;

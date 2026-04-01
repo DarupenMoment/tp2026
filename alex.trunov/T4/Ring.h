@@ -2,7 +2,6 @@
 #include <string>
 #include "Point.h"
 #include "Shape.h"
-#include "Rectangle.h"
 
 #ifndef RING_H
 #define RING_H

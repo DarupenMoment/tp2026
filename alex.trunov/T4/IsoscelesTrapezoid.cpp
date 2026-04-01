@@ -1,9 +1,6 @@
-#include <iostream>
+#include "IsoscelesTrapezoid.h"
+#include <cmath>
 #include <string>
-#include "Shape.h"
-#include "Rectangle.h"
-#include "Point.h"
-
 
 double IsoscelesTrapezoid::getArea() const {
     double sq = height_ * (bottomBase_ + topBase_) / 2;

@@ -6,7 +6,7 @@
 
 double CompositeShape::getArea() const {
     double res = 0.0;
-    for (const auto& s : shapes_){
+    for (const auto& s : shapes_) {
         res += s->getArea();
     }
     return res;
@@ -74,7 +74,7 @@ void CompositeShape::print(std::ostream& stream) const {
         this->getArea() << ":";
     for (const auto& s : shapes_) {
         stream << "\n " << s->getName();
-        stream << << ", (" << s->getCenter().x_ << ", " << s->getCenter().y_ << "), ";
+        stream << ", (" << s->getCenter().x_ << ", " << s->getCenter().y_ << "), ";
         stream << s->getArea() << ";";
     }
     stream << "\n]\n";
