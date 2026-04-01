@@ -88,38 +88,74 @@ namespace nspace {
             >> DelimiterIO{ ':' }
         >> DelimiterIO{ ')' };
     }
-
     std::istream& operator>>(std::istream& in, DataStruct& dest) {
         std::istream::sentry sentry(in);
         if (!sentry) return in;
         DataStruct input;
-        if (!(in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' })) return in;
-
         bool has[3] = { false, false, false };
-
+        std::istream::pos_type start = in.tellg();
+        if (!(in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' })) {
+            return in;
+        }
         for (int i = 0; i < 3; i++) {
             int keyNum = 0;
-            in >> KeyIO{ keyNum };
+            if (!(in >> KeyIO{ keyNum })) {
+                in.clear();
+                in.seekg(start);
+                in.setstate(std::ios::failbit);
+                return in;
+            }
             if (keyNum == 1 && !has[0]) {
-                in >> DoubleLitIO{ input.key1 };
+                if (!(in >> DoubleLitIO{ input.key1 })) {
+                    in.clear();
+                    in.seekg(start);
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
                 has[0] = true;
             }
             else if (keyNum == 2 && !has[1]) {
-                in >> RationalLspIO{ input.key2 };
+                if (!(in >> RationalLspIO{ input.key2 })) {
+                    in.clear();
+                    in.seekg(start);
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
                 has[1] = true;
             }
             else if (keyNum == 3 && !has[2]) {
-                in >> DelimiterIO{ '"' };
+                if (!(in >> DelimiterIO{ '"' })) {
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
                 std::getline(in, input.key3, '"');
                 has[2] = true;
             }
             else {
+                in.clear();
+                in.seekg(start);
                 in.setstate(std::ios::failbit);
+                return in;
             }
-            in >> DelimiterIO{ ':' };
+            if (!(in >> DelimiterIO{ ':' })) {
+                in.clear();
+                in.seekg(start);
+                in.setstate(std::ios::failbit);
+                return in;
+            }
         }
-        in >> DelimiterIO{ ')' };
-        if (in && has[0] && has[1] && has[2]) dest = input;
+        if (!(in >> DelimiterIO{ ')' })) {
+            in.clear();
+            in.seekg(start);
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+        if (has[0] && has[1] && has[2]) {
+            dest = input;
+        }
+        else {
+            in.setstate(std::ios::failbit);
+        }
         return in;
     }
 
@@ -164,7 +200,7 @@ int main() {
     }
     if (data.empty()) {
         std::cerr << "Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
-        return 1;
+        return 2;
     }
     std::sort(data.begin(), data.end(), nspace::compareData);
     std::copy(
