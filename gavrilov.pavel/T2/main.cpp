@@ -20,7 +20,8 @@ bool isDoubleLit(const std::string& s)
     size_t pos = 0;
     try {
         std::stod(s, &pos);
-    } catch (...) {
+    }
+    catch (...) {
         return false;
     }
     if (pos + 1 != s.length()) return false;
@@ -73,15 +74,26 @@ std::string parseQuotedString(const std::string& s)
 std::istream& operator>>(std::istream& in, DataStruct& data)
 {
     std::string line;
-    if (!std::getline(in, line)) return in;
+    if (!std::getline(in, line))
+    {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
 
-    if (line.empty() || line.front() != '(' || line.back() != ')')
+    if (line.empty())
+    {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+
+    if (line.front() != '(' || line.back() != ')')
     {
         in.setstate(std::ios::failbit);
         return in;
     }
 
     std::string content = line.substr(1, line.length() - 2);
+
     std::vector<std::string> parts;
     std::string current;
     int bracketDepth = 0;
@@ -153,7 +165,6 @@ std::istream& operator>>(std::istream& in, DataStruct& data)
     }
     else
     {
-        in.setstate(std::ios::failbit);
     }
     return in;
 }
@@ -188,3 +199,4 @@ int main()
 
     return 0;
 }
+
