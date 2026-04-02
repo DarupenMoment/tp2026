@@ -5,6 +5,8 @@
 #include <iterator>
 #include <iomanip>
 #include <limits>
+#include <cctype>
+#include <cmath>
 
 struct DataStruct {
     double key1;
@@ -28,7 +30,8 @@ struct StringIO {
     std::string& value;
 };
 
-std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
+std::istream& operator>>(std::istream& in, DelimiterIO&& dest)
+{
     std::istream::sentry sentry(in);
     if (!sentry) {
         return in;
@@ -41,15 +44,27 @@ std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
     return in;
 }
 
-std::istream& operator>>(std::istream& in, DoubleScientificIO&& dest) {
+std::istream& operator>>(std::istream& in, DoubleScientificIO&& dest)
+{
     std::istream::sentry sentry(in);
     if (!sentry) {
         return in;
     }
-    return in >> dest.value;
+    double value;
+    in >> value;
+    if (in) {
+        char next = in.peek();
+        if (next == 'e' || next == 'E') {
+            dest.value = value;
+        } else {
+            in.setstate(std::ios::failbit);
+        }
+    }
+    return in;
 }
 
-std::istream& operator>>(std::istream& in, UnsignedBinaryIO&& dest) {
+std::istream& operator>>(std::istream& in, UnsignedBinaryIO&& dest)
+{
     std::istream::sentry sentry(in);
     if (!sentry) {
         return in;
@@ -57,23 +72,24 @@ std::istream& operator>>(std::istream& in, UnsignedBinaryIO&& dest) {
     char c1, c2;
     if (in >> c1 >> c2 && c1 == '0' && std::tolower(c2) == 'b') {
         std::string binaryRepresentation;
-        while (std::isdigit(in.peek())) {
+        char next = in.peek();
+        while (next == '0' || next == '1') {
             binaryRepresentation += static_cast<char>(in.get());
+            next = in.peek();
         }
         if (!binaryRepresentation.empty()) {
             dest.value = std::stoull(binaryRepresentation, nullptr, 2);
-        }
-        else {
+        } else {
             in.setstate(std::ios::failbit);
         }
-    }
-    else {
+    } else {
         in.setstate(std::ios::failbit);
     }
     return in;
 }
 
-std::istream& operator>>(std::istream& in, StringIO&& dest) {
+std::istream& operator>>(std::istream& in, StringIO&& dest)
+{
     std::istream::sentry sentry(in);
     if (!sentry) {
         return in;
@@ -84,36 +100,55 @@ std::istream& operator>>(std::istream& in, StringIO&& dest) {
     return in;
 }
 
-std::istream& operator>>(std::istream& in, DataStruct& dest) {
+std::istream& operator>>(std::istream& in, DataStruct& dest)
+{
     std::istream::sentry sentry(in);
     if (!sentry) return in;
 
     DataStruct input;
     if (!(in >> DelimiterIO{ '(' })) return in;
 
+    bool hasKey1 = false;
+    bool hasKey2 = false;
+    bool hasKey3 = false;
+
     for (int i = 0; i < 3; ++i) {
         std::string label;
         in >> DelimiterIO{ ':' };
 
         char c;
-        while (in >> c && std::isalpha(c) || std::isdigit(c)) {
+        while (in >> c && (std::isalpha(static_cast<unsigned char>(c)) ||
+                          std::isdigit(static_cast<unsigned char>(c)))) {
             label += c;
-            if (!std::isalnum(in.peek())) break;
+            char next = in.peek();
+            if (!std::isalnum(static_cast<unsigned char>(next))) break;
         }
 
-        if (label == "key1") in >> DoubleScientificIO{ input.key1 };
-        else if (label == "key2") in >> UnsignedBinaryIO{ input.key2 };
-        else if (label == "key3") in >> StringIO{ input.key3 };
-        else in.setstate(std::ios::failbit);
+        if (label == "key1") {
+            in >> DoubleScientificIO{ input.key1 };
+            hasKey1 = true;
+        } else if (label == "key2") {
+            in >> UnsignedBinaryIO{ input.key2 };
+            hasKey2 = true;
+        } else if (label == "key3") {
+            in >> StringIO{ input.key3 };
+            hasKey3 = true;
+        } else {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
     }
 
-    if (in >> DelimiterIO{ ':' } >> DelimiterIO{ ')' }) {
+    if (hasKey1 && hasKey2 && hasKey3 && (in >> DelimiterIO{ ':' } >> DelimiterIO{ ')' })) {
         dest = input;
+    } else {
+        in.setstate(std::ios::failbit);
     }
     return in;
 }
 
-std::string formatBinary(unsigned long long value) {
+std::string formatBinary(unsigned long long value)
+{
     if (value == 0) return "0";
     std::string result;
     while (value > 0) {
@@ -124,7 +159,8 @@ std::string formatBinary(unsigned long long value) {
     return result;
 }
 
-std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
+std::ostream& operator<<(std::ostream& out, const DataStruct& src)
+{
     std::ostream::sentry sentry(out);
     if (!sentry) {
         return out;
@@ -135,8 +171,9 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
     return out;
 }
 
-bool compareData(const DataStruct& a, const DataStruct& b) {
-    if (a.key1 != b.key1) {
+bool compareData(const DataStruct& a, const DataStruct& b)
+{
+    if (std::fabs(a.key1 - b.key1) > std::numeric_limits<double>::epsilon()) {
         return a.key1 < b.key1;
     }
     if (a.key2 != b.key2) {
@@ -145,19 +182,18 @@ bool compareData(const DataStruct& a, const DataStruct& b) {
     return a.key3.length() < b.key3.length();
 }
 
-int main() {
+int main()
+{
     std::vector<DataStruct> storage;
+    DataStruct temp;
 
-    while (!std::cin.eof()) {
-        std::copy(
-            std::istream_iterator<DataStruct>(std::cin),
-            std::istream_iterator<DataStruct>(),
-            std::back_inserter(storage)
-        );
-        if (std::cin.fail() && !std::cin.eof()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
+    while (std::cin >> temp) {
+        storage.push_back(temp);
+    }
+
+    if (std::cin.fail() && !std::cin.eof()) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     std::sort(storage.begin(), storage.end(), compareData);
