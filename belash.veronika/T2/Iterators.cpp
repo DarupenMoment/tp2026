@@ -7,15 +7,31 @@
 #include <iomanip>
 #include <cctype>
 
-struct DataStruct
-{
+struct DataStruct {
     double key1;
     unsigned long long key2;
     std::string key3;
 };
 
-std::string extractValue(const std::string& line, const std::string& key)
-{
+class iofmtguard {
+public:
+    explicit iofmtguard(std::basic_ios<char>& s) :
+        s_(s), width_(s.width()), fill_(s.fill()), precision_(s.precision()), fmt_(s.flags()) {
+    }
+    ~iofmtguard() {
+        s_.width(width_);
+        s_.fill(fill_);
+        s_.precision(precision_);
+        s_.flags(fmt_);
+    }
+private:
+    std::basic_ios<char>& s_;
+    std::streamsize width_, precision_;
+    char fill_;
+    std::basic_ios<char>::fmtflags fmt_;
+};
+
+std::string extractValue(const std::string& line, const std::string& key) {
     std::string search = ":" + key + " ";
     size_t pos = line.find(search);
     if (pos == std::string::npos) return "";
@@ -25,84 +41,56 @@ std::string extractValue(const std::string& line, const std::string& key)
     return line.substr(pos, end - pos);
 }
 
-bool parseDataStruct(const std::string& line, DataStruct& ds)
-{
-    if (line.size() < 4 || line[0] != '(' || line[1] != ':' ||
-        line[line.size() - 2] != ':' || line[line.size() - 1] != ')')
-        return false;
-
-    std::string key1_val = extractValue(line, "key1");
-    std::string key2_val = extractValue(line, "key2");
-    std::string key3_val = extractValue(line, "key3");
-    if (key1_val.empty() || key2_val.empty() || key3_val.empty())
-        return false;
-
-    std::istringstream iss1(key1_val);
-    double d;
-    if (!(iss1 >> d)) return false;
-    char suffix;
-    if (!(iss1 >> suffix)) return false;
-    if (suffix != 'd' && suffix != 'D') return false;
-    std::string leftover1;
-    if (iss1 >> leftover1) return false;
-    ds.key1 = d;
-
-    std::istringstream iss2(key2_val);
-    unsigned long long ull;
-    if (!(iss2 >> ull)) return false;
-    std::string suffix2;
-    if (!(iss2 >> suffix2)) return false;
-    for (char& c : suffix2) c = std::tolower(c);
-    if (suffix2 != "u11" && suffix2 != "ull") return false;
-    std::string leftover2;
-    if (iss2 >> leftover2) return false;
-    ds.key2 = ull;
-
-    if (key3_val.size() < 2 || key3_val.front() != '"' || key3_val.back() != '"')
-        return false;
-    ds.key3 = key3_val.substr(1, key3_val.size() - 2);
-
-    return true;
-}
-
-int main()
-{
-    std::vector<DataStruct> vec;
+std::istream& operator>>(std::istream& in, DataStruct& dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
     std::string line;
-
-    while (std::getline(std::cin, line))
-    {
-        DataStruct ds;
-        if (parseDataStruct(line, ds))
-        {
-            vec.push_back(ds);
-        }
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.size() < 4 || line[0] != '(' || line[1] != ':' || line[line.size() - 2] != ':' || line[line.size() - 1] != ')') continue;
+        std::string v1 = extractValue(line, "key1");
+        std::string v2 = extractValue(line, "key2");
+        std::string v3 = extractValue(line, "key3");
+        if (v1.empty() || v2.empty() || v3.empty()) continue;
+        std::istringstream iss1(v1);
+        double val1; char s1;
+        if (!(iss1 >> val1 >> s1)) continue;
+        if (s1 != 'd' && s1 != 'D') continue;
+        char extra1; if (iss1 >> extra1) continue;
+        std::istringstream iss2(v2);
+        unsigned long long val2; std::string s2;
+        if (!(iss2 >> val2 >> s2)) continue;
+        for (char& c : s2) c = std::tolower(static_cast<unsigned char>(c));
+        if (s2 != "ull") continue;
+        char extra2; if (iss2 >> extra2) continue;
+        if (v3.size() < 2 || v3.front() != '"' || v3.back() != '"') continue;
+        dest.key1 = val1;
+        dest.key2 = val2;
+        dest.key3 = v3.substr(1, v3.size() - 2);
+        return in;
     }
-
-    std::sort(vec.begin(), vec.end(),
-        [](const DataStruct& a, const DataStruct& b)
-        {
-            if (a.key1 != b.key1) return a.key1 < b.key1;
-            if (a.key2 != b.key2) return a.key2 < b.key2;
-            return a.key3.size() < b.key3.size();
-        });
-
-    if (vec.empty())
-    {
-        std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped\n";
-    }
-    else
-    {
-        std::copy(vec.begin(), vec.end(),
-            std::ostream_iterator<DataStruct>(std::cout, "\n"));
-    }
-
-    return 0;
+    in.setstate(std::ios::failbit);
+    return in;
 }
 
-std::ostream& operator<<(std::ostream& out, const DataStruct& src)
-{
-    out << "(:key1 " << std::fixed << std::setprecision(1) << src.key1 << "d:key2 "
-        << src.key2 << "u11:key3 \"" << src.key3 << "\":)";
+std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
+    std::ostream::sentry sentry(out);
+    if (!sentry) return out;
+    iofmtguard fmtguard(out);
+    out << "(:key1 " << std::fixed << std::setprecision(1) << src.key1 << "d:key2 " << src.key2 << "ull:key3 \"" << src.key3 << "\":)";
     return out;
+}
+
+bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
+    if (a.key1 != b.key1) return a.key1 < b.key1;
+    if (a.key2 != b.key2) return a.key2 < b.key2;
+    return a.key3.length() < b.key3.length();
+}
+
+int main() {
+    std::vector<DataStruct> vec;
+    std::copy(std::istream_iterator<DataStruct>(std::cin), std::istream_iterator<DataStruct>(), std::back_inserter(vec));
+    std::sort(vec.begin(), vec.end(), compareDataStruct);
+    std::copy(vec.begin(), vec.end(), std::ostream_iterator<DataStruct>(std::cout, "\n"));
+    return 0;
 }
