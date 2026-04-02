@@ -11,6 +11,8 @@ struct DataStruct
     unsigned long long key1;
     unsigned long long key2;
     std::string key3;
+
+    std::string key2Text;
 };
 
 bool parseULLLiteral(const std::string& str, unsigned long long& result)
@@ -34,7 +36,7 @@ bool parseULLLiteral(const std::string& str, unsigned long long& result)
 
     for (char c : numberPart)
     {
-        if (!std::isdigit(c))
+        if (!std::isdigit(static_cast<unsigned char>(c)))
         {
             return false;
         }
@@ -110,6 +112,7 @@ bool parseRecord(const std::string& line, DataStruct& result)
     unsigned long long key1 = 0;
     unsigned long long key2 = 0;
     std::string key3;
+    std::string key2Text;
 
     bool hasKey1 = false;
     bool hasKey2 = false;
@@ -204,6 +207,7 @@ bool parseRecord(const std::string& line, DataStruct& result)
                 return false;
             }
 
+            key2Text = token.substr(2);
             hasKey2 = true;
         }
         else if (key == "key3")
@@ -258,7 +262,7 @@ bool parseRecord(const std::string& line, DataStruct& result)
         return false;
     }
 
-    result = { key1, key2, key3 };
+    result = { key1, key2, key3, key2Text };
     return true;
 }
 
@@ -290,22 +294,29 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& value)
     out << "(:key1 " << value.key1 << "ull";
     out << ":key2 0b";
 
-    if (value.key2 == 0)
+    if (!value.key2Text.empty())
     {
-        out << '0';
+        out << value.key2Text;
     }
     else
     {
-        unsigned long long temp = value.key2;
-        std::string bin;
-
-        while (temp > 0)
+        if (value.key2 == 0)
         {
-            bin = char('0' + (temp % 2)) + bin;
-            temp /= 2;
+            out << '0';
         }
+        else
+        {
+            unsigned long long temp = value.key2;
+            std::string bin;
 
-        out << bin;
+            while (temp > 0)
+            {
+                bin = char('0' + (temp % 2)) + bin;
+                temp /= 2;
+            }
+
+            out << bin;
+        }
     }
 
     out << ":key3 \"" << value.key3 << "\":)";
@@ -327,7 +338,8 @@ bool compareDataStruct(const DataStruct& lhs, const DataStruct& rhs)
     return lhs.key3.length() < rhs.key3.length();
 }
 
-int main() {
+int main()
+{
     std::vector<DataStruct> data;
     std::string line;
 
@@ -335,7 +347,7 @@ int main() {
     {
         if (line.empty())
         {
-            break;
+            continue;
         }
 
         std::istringstream lineStream(line);
@@ -357,4 +369,3 @@ int main() {
 
     return 0;
 }
-
