@@ -170,7 +170,7 @@ std::istream& operator>>(std::istream& is, DataStruct& data) {
 std::ostream& operator<<(std::ostream& os, const DataStruct& data) {
     os << "(:key1 0x" << std::hex << std::uppercase << data.key1 << std::dec << std::nouppercase;
     os << ":key2 #c(" << std::fixed << std::setprecision(1);
-    os << data.key2.real() << " " << data.key2.imag() << std::defaultfloat << "):";
+    os << data.key2.real() << " " << data.key2.imag() << std::defaultfloat << ")";
     os << ":key3 \"" << data.key3 << "\":)";
     return os;
 }
@@ -190,6 +190,7 @@ bool compareData(const DataStruct& d1, const DataStruct& d2) {
 int main() {
     std::vector<DataStruct> vec;
     std::string line;
+
     while (std::getline(std::cin, line)) {
         if (line.empty()) {
             continue;
@@ -203,6 +204,12 @@ int main() {
             vec.push_back(temp);
         }
     }
+
+    if (vec.empty()) {
+        std::cerr << "Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
+        return 0;
+    }
+
     std::sort(vec.begin(), vec.end(), compareData);
     std::copy(vec.begin(), vec.end(), std::ostream_iterator<DataStruct>(std::cout, "\n"));
 
