@@ -84,12 +84,10 @@ std::istream& operator>>(std::istream& in, DoubleIO&& dest) {
     bool dotFound = false;
     bool hasDigitsBeforeDot = false;
     bool hasDigitsAfterDot = false;
-    bool isNegative = false;
 
 
     in >> std::ws;
     if (in.peek() == '-') {
-        isNegative = true;
         in.get(ch);
         mantissaBuffer += '-';
     }
