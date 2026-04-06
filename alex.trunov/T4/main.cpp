@@ -1,4 +1,4 @@
-﻿﻿#include <iostream>
+﻿#include <iostream>
 #include <iomanip>
 #include <memory>
 #include <vector>
@@ -10,7 +10,7 @@
 #include "IsoscelesTrapezoid.h"
 #include "CompositeShape.h"
 
-void testResult(bool res, const std::string & testName) {
+void testResult(bool res, const std::string& testName) {
     std::cout << (res ? "[PASSED]\t" : "[FAILED]\t");
     std::cout << testName << '\n';
 }
