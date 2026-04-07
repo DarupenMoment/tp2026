@@ -165,11 +165,6 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
 
     cleanup_whitespaces(in);
 
-    // if (in.peek() != '(') {
-    //     in.setstate(std::ios::failbit);
-    //     return in;
-    // }
-
     DataStruct object;
     struct check_keys_status {
         bool key1 = false;
@@ -300,8 +295,6 @@ int main() {
         objects.end(),
         compare_keys
     );
-
-    std::cout << "\n --- | --- | --- \n";
 
     std::copy(
         objects.begin(),
