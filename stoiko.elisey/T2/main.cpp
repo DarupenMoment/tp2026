@@ -205,17 +205,13 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
         }
     };
 
-    in >> DelimiterIO{'('};
+    in >> DelimiterIO{'('} >> DelimiterIO{':'};;
     if (!in) {
         return in;
     }
 
     check_keys_status keys;
     while (in && in.peek() != ')') {
-        if (in.peek() == ':') {
-            in.get();
-        }
-
         std::string field_type;
         in >> LabelIO{field_type};
         if (!in) {
@@ -245,12 +241,7 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
             return in;
         }
 
-        if (in.peek() == ':') {
-            in.get();
-        } else if (in.peek() != ')') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
+        in >> DelimiterIO{':'};
     }
 
     in >> DelimiterIO{')'};
