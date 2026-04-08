@@ -33,7 +33,7 @@ struct StrIO {
 
 class iofmtguard {
 public:
-    iofmtguard(std::basic_ios<char>& s);
+    explicit iofmtguard(std::basic_ios<char>& s);
     ~iofmtguard();
 private:
     std::basic_ios<char>& s_;
@@ -53,15 +53,14 @@ bool compareDataStruct(const DataStruct& a, const DataStruct& b);
 
 int main() {
     std::vector<DataStruct> data;
+    DataStruct temp;
 
-    while (!std::cin.eof()) {
-        std::copy(
-            std::istream_iterator<DataStruct>(std::cin),
-            std::istream_iterator<DataStruct>(),
-            std::back_inserter(data)
-        );
-
-        if (std::cin.fail() && !std::cin.eof()) {
+    while (true) {
+        if (std::cin >> temp) {
+            data.push_back(temp);
+        } else if (std::cin.eof()) {
+            break;
+        } else {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
@@ -69,21 +68,18 @@ int main() {
 
     std::sort(data.begin(), data.end(), compareDataStruct);
 
-    std::copy(
-        data.begin(),
-        data.end(),
-        std::ostream_iterator<DataStruct>(std::cout, "\n")
-    );
+    for (const auto& item : data) {
+        std::cout << item << '\n';
+    }
 
     return EXIT_SUCCESS;
 }
 
 std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
-    std::istream::sentry sentry(in, true);
+    std::istream::sentry sentry(in, false);
     if (!sentry) return in;
 
-    char c = '0';
-    in >> c;
+    char c = in.get();
     if (in && c != dest.exp) {
         in.setstate(std::ios::failbit);
     }
@@ -94,13 +90,18 @@ std::istream& operator>>(std::istream& in, SllIO&& dest) {
     std::istream::sentry sentry(in);
     if (!sentry) return in;
 
-    in >> dest.ref;
-    if (!in) return in;
+    if (!(in >> dest.ref)) {
+        return in;
+    }
 
-    char c1 = in.get();
-    char c2 = in.get();
+    char c1, c2;
+    if (!in.get(c1) || !in.get(c2)) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
 
-    if ((c1 != 'l' && c1 != 'L') || (c2 != 'l' && c2 != 'L')) {
+    bool valid = (c1 == 'l' || c1 == 'L') && (c2 == 'l' || c2 == 'L');
+    if (!valid) {
         in.setstate(std::ios::failbit);
     }
 
@@ -112,7 +113,8 @@ std::istream& operator>>(std::istream& in, CmpIO&& dest) {
     if (!sentry) return in;
 
     double re = 0.0, im = 0.0;
-    in >> DelimiterIO{'#'} >> DelimiterIO{'c'} >> DelimiterIO{'('} >> re >> im >> DelimiterIO{')'};
+
+    in >> DelimiterIO{ '#' } >> DelimiterIO{ 'c' } >> DelimiterIO{ '(' } >> re >> im >> DelimiterIO{ ')' };
 
     if (in) {
         dest.ref = std::complex<double>(re, im);
@@ -124,7 +126,15 @@ std::istream& operator>>(std::istream& in, StrIO&& dest) {
     std::istream::sentry sentry(in);
     if (!sentry) return in;
 
-    return std::getline(in >> DelimiterIO{'"'}, dest.ref, '"');
+    if (!(in >> DelimiterIO{ '"' })) {
+        return in;
+    }
+
+    std::getline(in, dest.ref, '"');
+    if (!in || in.eof()) {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
 }
 
 std::istream& operator>>(std::istream& in, DataStruct& dest) {
@@ -134,14 +144,22 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
     DataStruct input;
     bool hasKey1 = false, hasKey2 = false, hasKey3 = false;
 
-    in >> DelimiterIO{'('} >> DelimiterIO{':'};
+    in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' };
     if (!in) return in;
 
-    for (int i = 0; i < 3; ++i) {
-        char k = '0', e = '0', y = '0', num = '0';
-        in >> k >> e >> y >> num;
+    int i = 0;
+    while (i < 3) {
+        char k = in.get();
+        char e = in.get();
+        char y = in.get();
 
         if (!in || k != 'k' || e != 'e' || y != 'y') {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        char num = in.get();
+        if (!in) {
             in.setstate(std::ios::failbit);
             return in;
         }
@@ -153,26 +171,26 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
         }
 
         if (num == '1' && !hasKey1) {
-            in >> SllIO{input.key1};
+            in >> SllIO{ input.key1 };
             hasKey1 = true;
-        }
-        else if (num == '2' && !hasKey2) {
-            in >> CmpIO{input.key2};
+        } else if (num == '2' && !hasKey2) {
+            in >> CmpIO{ input.key2 };
             hasKey2 = true;
-        }
-        else if (num == '3' && !hasKey3) {
-            in >> StrIO{input.key3};
+        } else if (num == '3' && !hasKey3) {
+            in >> StrIO{ input.key3 };
             hasKey3 = true;
-        }
-        else {
+        } else {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        in >> DelimiterIO{':'};
+        in >> DelimiterIO{ ':' };
+        if (!in) return in;
+
+        ++i;
     }
 
-    in >> DelimiterIO{')'};
+    in >> DelimiterIO{ ')' };
 
     if (in && hasKey1 && hasKey2 && hasKey3) {
         dest = std::move(input);
