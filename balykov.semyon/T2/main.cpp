@@ -116,7 +116,7 @@ std::istream& operator>>(std::istream& in, ULLBinIO&& dest) {
         in.setstate(std::ios::failbit);
         return in;
     }
-    std::string key1Raw;
+    dest.raw = binary_str;
     dest.ref = 0;
     for (char c : binary_str) {
         dest.ref = dest.ref * 2 + (c - '0');
