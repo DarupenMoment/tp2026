@@ -1,219 +1,209 @@
 ﻿#include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <iterator>
-#include <complex>
 #include <iomanip>
+#include <complex>
+#include <cmath>
 #include <sstream>
+#include <cctype>
 
-struct DataStruct {
-    unsigned long long key1;
-    std::complex<double> key2;
-    std::string key3;
-};
+namespace nspace {
+    struct DataStruct {
+        unsigned long long key1;
+        std::complex<double> key2;
+        std::string key3;
+    };
 
-bool isHexNumber(const std::string& s, unsigned long long& result) {
-    if (s.length() < 3) return false;
+    bool parseHexULL(const std::string& str, unsigned long long& value) {
+        if (str.length() < 3) return false;
+        if (str[0] != '0' || (str[1] != 'x' && str[1] != 'X')) return false;
+        if (str.length() == 2) return false;
 
-    if (s[0] != '0') return false;
-    if (s[1] != 'x' && s[1] != 'X') return false;
-
-    for (size_t i = 2; i < s.length(); i++) {
-        char c = s[i];
-        bool isDigit = (c >= '0' && c <= '9');
-        bool isHex = (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-        if (!isDigit && !isHex) return false;
-    }
-
-    std::stringstream ss(s);
-    ss >> std::hex >> result;
-    return !ss.fail();
-}
-
-bool isComplexNumber(const std::string& s, std::complex<double>& result) {
-    if (s.length() < 7) return false;
-
-    if (s[0] != '#' || s[1] != 'c' || s[2] != '(') return false;
-    if (s.back() != ')') return false;
-
-    std::string inner = s.substr(3, s.length() - 4);
-
-    size_t spacePos = inner.find(' ');
-    if (spacePos == std::string::npos) return false;
-    if (spacePos == 0 || spacePos == inner.length() - 1) return false;
-
-    for (size_t i = 0; i < inner.length(); i++) {
-        if (i != spacePos && inner[i] == ' ') return false;
-    }
-
-    std::string realStr = inner.substr(0, spacePos);
-    std::string imagStr = inner.substr(spacePos + 1);
-
-    double real, imag;
-    std::stringstream ss1(realStr), ss2(imagStr);
-
-    if (!(ss1 >> real) || !(ss2 >> imag)) return false;
-
-    char extra;
-    if (ss1 >> extra || ss2 >> extra) return false;
-
-    result = std::complex<double>(real, imag);
-    return true;
-}
-
-bool isQuotedString(const std::string& s, std::string& result) {
-    if (s.length() < 2) return false;
-
-    if (s.front() != '"' || s.back() != '"') return false;
-
-    result = s.substr(1, s.length() - 2);
-    return true;
-}
-
-std::istream& operator>>(std::istream& in, DataStruct& data) {
-    std::string line;
-
-    if (!std::getline(in, line)) {
-        return in;
-    }
-
-    size_t start = line.find('(');
-    size_t end = line.rfind(')');
-
-    if (start == std::string::npos || end == std::string::npos || end <= start) {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    std::string content = line.substr(start + 1, end - start - 1);
-
-    unsigned long long key1Val = 0;
-    std::complex<double> key2Val(0, 0);
-    std::string key3Val;
-
-    bool found1 = false, found2 = false, found3 = false;
-
-    std::vector<std::string> parts;
-    bool inQuotes = false;
-    bool inComplex = false;
-    size_t lastPos = 0;
-
-    for (size_t i = 0; i < content.length(); i++) {
-        if (content[i] == '"') {
-            inQuotes = !inQuotes;
-        }
-        else if (!inQuotes && content[i] == '#') {
-            inComplex = true;
-        }
-        else if (!inQuotes && content[i] == ')' && inComplex) {
-            inComplex = false;
-        }
-        else if (!inQuotes && !inComplex && content[i] == ':') {
-            if (i > lastPos) {
-                parts.push_back(content.substr(lastPos, i - lastPos));
-            }
-            lastPos = i + 1;
-        }
-    }
-    if (lastPos < content.length()) {
-        parts.push_back(content.substr(lastPos));
-    }
-
-    for (const std::string& part : parts) {
-        if (part.empty()) continue;
-
-        size_t spacePos = part.find(' ');
-        if (spacePos == std::string::npos) continue;
-
-        std::string name = part.substr(0, spacePos);
-        std::string value = part.substr(spacePos + 1);
-
-        if (name == "key1") {
-            if (isHexNumber(value, key1Val)) {
-                found1 = true;
+        for (size_t i = 2; i < str.length(); ++i) {
+            char c = str[i];
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                return false;
             }
         }
-        else if (name == "key2") {
-            if (isComplexNumber(value, key2Val)) {
-                found2 = true;
+        std::stringstream s(str);
+        s >> std::hex >> value;
+        return !s.fail();
+    }
+
+    bool parseComplex(const std::string& str, std::complex<double>& value) {
+        if (str.length() < 6 || str[0] != '#' || (str[1] != 'c' && str[1] != 'C') || str[2] != '(') {
+            return false;
+        }
+
+        size_t close_pos = str.find(')');
+        if (close_pos == std::string::npos || close_pos != str.length() - 1) {
+            return false;
+        }
+
+        std::string inner = str.substr(3, close_pos - 3);
+        std::stringstream ss(inner);
+        double real, imag;
+
+        if (!(ss >> real >> imag)) {
+            return false;
+        }
+
+        char leftover;
+        if (ss >> leftover) {
+            return false;
+        }
+
+        size_t space_pos = inner.find(' ');
+        if (space_pos == std::string::npos) {
+            return false;
+        }
+        if (space_pos > 0 && inner[space_pos - 1] == ' ') {
+            return false;
+        }
+        if (space_pos + 1 < inner.length() && inner[space_pos + 1] == ' ') {
+            return false;
+        }
+
+        value = std::complex<double>(real, imag);
+        return true;
+    }
+
+    bool parseString(const std::string& str, std::string& value) {
+        if (str.length() < 2 || str.front() != '"' || str.back() != '"') {
+            return false;
+        }
+        value = str.substr(1, str.length() - 2);
+        return true;
+    }
+
+    std::istream& operator>>(std::istream& is, DataStruct& data) {
+        std::string line;
+        if (!std::getline(is, line)) {
+            return is;
+        }
+
+        size_t start = line.find('(');
+        if (start == std::string::npos) {
+            is.setstate(std::ios::failbit);
+            return is;
+        }
+
+        size_t end = line.rfind(')');
+        if (end == std::string::npos || end <= start) {
+            is.setstate(std::ios::failbit);
+            return is;
+        }
+
+        std::string content = line.substr(start + 1, end - start - 1);
+
+        unsigned long long key1 = 0;
+        std::complex<double> key2(0, 0);
+        std::string key3;
+        bool key1_found = false, key2_found = false, key3_found = false;
+
+        std::vector<std::string> parts;
+        bool in_quotes = false;
+        bool in_complex = false;
+        size_t last_pos = 0;
+
+        for (size_t i = 0; i < content.length(); ++i) {
+            if (content[i] == '"') {
+                in_quotes = !in_quotes;
+            }
+            else if (!in_quotes && content[i] == '#') {
+                in_complex = true;
+            }
+            else if (!in_quotes && content[i] == ')' && in_complex) {
+                in_complex = false;
+            }
+            else if (!in_quotes && !in_complex && content[i] == ':') {
+                if (i > last_pos) {
+                    parts.push_back(content.substr(last_pos, i - last_pos));
+                }
+                last_pos = i + 1;
             }
         }
-        else if (name == "key3") {
-            if (isQuotedString(value, key3Val)) {
-                found3 = true;
+        if (last_pos < content.length()) {
+            parts.push_back(content.substr(last_pos));
+        }
+
+        for (const auto& part : parts) {
+            if (part.empty()) continue;
+
+            size_t space_pos = part.find(' ');
+            if (space_pos == std::string::npos) continue;
+
+            std::string name = part.substr(0, space_pos);
+            std::string value_str = part.substr(space_pos + 1);
+
+            if (name == "key1") {
+                if (parseHexULL(value_str, key1)) {
+                    key1_found = true;
+                }
+            }
+            else if (name == "key2") {
+                if (parseComplex(value_str, key2)) {
+                    key2_found = true;
+                }
+            }
+            else if (name == "key3") {
+                if (parseString(value_str, key3)) {
+                    key3_found = true;
+                }
             }
         }
+
+        if (key1_found && key2_found && key3_found) {
+            data.key1 = key1;
+            data.key2 = key2;
+            data.key3 = key3;
+            return is;
+        }
+
+        is.setstate(std::ios::failbit);
+        return is;
     }
 
-    if (found1 && found2 && found3) {
-        data.key1 = key1Val;
-        data.key2 = key2Val;
-        data.key3 = key3Val;
-    }
-    else {
-        in.setstate(std::ios::failbit);
-    }
-
-    return in;
-}
-
-std::ostream& operator<<(std::ostream& out, const DataStruct& data) {
-
-    out << "(:key1 0x" << std::hex << std::uppercase << data.key1;
-    out << std::dec << std::nouppercase;
-
-    out << ":key2 #c(" << std::fixed << std::setprecision(1);
-    out << data.key2.real() << " " << data.key2.imag();
-    out << std::defaultfloat << ")";
-
-    out << ":key3 \"" << data.key3 << "\":)";
-
-    return out;
-}
-
-bool compareData(const DataStruct& a, const DataStruct& b) {
-    if (a.key1 != b.key1) {
-        return a.key1 < b.key1;
+    std::ostream& operator<<(std::ostream& os, const DataStruct& data) {
+        os << "(:key1 0x" << std::hex << std::uppercase << data.key1 << std::dec << std::nouppercase;
+        os << ":key2 #c(";
+        os << std::fixed << std::setprecision(1);
+        os << data.key2.real() << " " << data.key2.imag();
+        os << std::defaultfloat << "):";
+        os << ":key3 \"" << data.key3 << "\":)";
+        return os;
     }
 
-    double modA = std::abs(a.key2);
-    double modB = std::abs(b.key2);
-    if (modA != modB) {
-        return modA < modB;
+    bool compareData(const DataStruct& a, const DataStruct& b) {
+        if (a.key1 != b.key1) {
+            return a.key1 < b.key1;
+        }
+        double ma = std::abs(a.key2);
+        double mb = std::abs(b.key2);
+        if (ma != mb) {
+            return ma < mb;
+        }
+        return a.key3.length() < b.key3.length();
     }
-
-    return a.key3.length() < b.key3.length();
 }
 
 int main() {
-    std::vector<DataStruct> records;
-
-    std::string line;
-    while (std::getline(std::cin, line)) {
-        if (line.empty()) continue;
-
-        if (line.find('(') == std::string::npos) continue;
-
-        std::istringstream iss(line);
-        DataStruct temp;
-
-        if (iss >> temp) {
-            records.push_back(temp);
-        }
-    }
-
-    if (records.empty()) {
-        std::cerr << "Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
-        return 0;
-    }
-
-    std::sort(records.begin(), records.end(), compareData);
+    std::vector<nspace::DataStruct> data;
 
     std::copy(
-        records.begin(),
-        records.end(),
-        std::ostream_iterator<DataStruct>(std::cout, "\n")
+        std::istream_iterator<nspace::DataStruct>(std::cin),
+        std::istream_iterator<nspace::DataStruct>(),
+        std::back_inserter(data)
+    );
+
+    std::sort(data.begin(), data.end(), nspace::compareData);
+
+    std::copy(
+        data.begin(),
+        data.end(),
+        std::ostream_iterator<nspace::DataStruct>(std::cout, "\n")
     );
 
     return 0;
