@@ -7,6 +7,7 @@
 #include <sstream>
 #include <complex>
 #include <cmath>
+#include <limits>
 
 struct DataStruct
 {
@@ -210,6 +211,9 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
     {
         return in;
     }
+
+    std::streampos pos = in.tellg();
+
     while (std::isspace(in.peek()))
     {
         in.get();
@@ -229,6 +233,9 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
     in >> DelimiterIO{ '(' };
     if (!in)
     {
+        in.clear();
+        in.seekg(pos);
+        in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         return in;
     }
 
@@ -243,7 +250,9 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
         in >> IdentifierIO{ field_name };
         if (!in)
         {
-            in.setstate(std::ios::failbit);
+            in.clear();
+            in.seekg(pos);
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             return in;
         }
 
@@ -270,11 +279,13 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
         else
         {
             in.setstate(std::ios::failbit);
-            return in;
         }
 
         if (!in)
         {
+            in.clear();
+            in.seekg(pos);
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             return in;
         }
 
@@ -285,6 +296,9 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
         else if (in.peek() != ')')
         {
             in.setstate(std::ios::failbit);
+            in.clear();
+            in.seekg(pos);
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             return in;
         }
     }
@@ -297,6 +311,9 @@ std::istream& operator>>(std::istream& in, DataStruct& dest)
     }
     else
     {
+        in.clear();
+        in.seekg(pos);
+        in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         in.setstate(std::ios::failbit);
     }
     return in;
@@ -354,11 +371,11 @@ int main()
         }
 
         std::istringstream lineStream(line);
-        std::copy(
-            std::istream_iterator<DataStruct>(lineStream),
-            std::istream_iterator<DataStruct>(),
-            std::back_inserter(data)
-        );
+        DataStruct temp;
+        if (lineStream >> temp)
+        {
+            data.push_back(temp);
+        }
     }
 
     std::sort(data.begin(), data.end(), compareDataStruct);
