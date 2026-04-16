@@ -130,13 +130,13 @@ std::istream& operator>>(std::istream& in, ComplexIO&& dest)
     std::string inside = token.substr(3, token.size() - 4);
     std::stringstream ss(inside);
     double real, imag;
-    
+
     if (!(ss >> real >> imag))
     {
         in.setstate(std::ios::failbit);
         return in;
     }
-    
+
     dest.ref = std::complex<double>(real, imag);
     return in;
 }
@@ -373,4 +373,5 @@ int main()
 
     return 0;
 }
+
 
