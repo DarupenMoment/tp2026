@@ -21,13 +21,11 @@ bool cmp(const DataStruct& a, const DataStruct& b) {
     return a.key3 < b.key3;
 }
 
-int main()
-{
+int main() {
     std::vector<DataStruct> data;
     std::string line;
 
-    while (std::getline(std::cin, line))
-    {
+    while (std::getline(std::cin, line)) {
         if (line.empty())
         {
             continue;
@@ -39,11 +37,6 @@ int main()
             std::istream_iterator<DataStruct>(),
             std::back_inserter(data)
         );
-    }
-
-    if (data.empty())
-    {
-        return 0;
     }
 
     std::sort(data.begin(), data.end(), cmp);
