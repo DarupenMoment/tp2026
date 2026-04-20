@@ -65,11 +65,7 @@ std::istream& operator>>(std::istream& in, UllHexIO&& dest) {
         in.setstate(std::ios::failbit);
         return in;
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> origin/rukavitsyn.vladimir/T2
     if (hexStr.size() > 16) {
         in.setstate(std::ios::failbit);
         return in;
