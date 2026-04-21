@@ -8,6 +8,7 @@
 #include <limits>
 #include <cmath>
 #include <cstdlib>
+#include <cctype>
 
 struct DataStruct {
     long long key1;
@@ -54,12 +55,15 @@ bool compareDataStruct(const DataStruct& a, const DataStruct& b);
 int main() {
     std::vector<DataStruct> data;
 
-    while (!std::cin.eof()) {
+    while (true) {
         std::copy(std::istream_iterator<DataStruct>(std::cin),
                   std::istream_iterator<DataStruct>(),
                   std::back_inserter(data));
 
-        if (std::cin.fail() && !std::cin.eof()) {
+        if (std::cin.eof()) {
+            break;
+        }
+        if (std::cin.fail()) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
@@ -91,15 +95,20 @@ std::istream& operator>>(std::istream& in, SllIO&& dest) {
         return in;
     }
 
+    std::streampos pos = in.tellg();
     char c1, c2;
-    if (!in.get(c1) || !in.get(c2)) {
-        in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    bool valid = (c1 == 'l' || c1 == 'L') && (c2 == 'l' || c2 == 'L');
-    if (!valid) {
-        in.setstate(std::ios::failbit);
+    if (in.get(c1) && in.get(c2)) {
+        if ((c1 == 'l' || c1 == 'L') && (c2 == 'l' || c2 == 'L')) {
+            if (in.peek() != ':' && in.peek() != ')' && !std::isspace(in.peek())) {
+                in.setstate(std::ios::failbit);
+            }
+        } else {
+            in.clear();
+            in.seekg(pos);
+        }
+    } else {
+        in.clear();
+        in.seekg(pos);
     }
 
     return in;
@@ -142,40 +151,34 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
     bool hasKey1 = false, hasKey2 = false, hasKey3 = false;
 
     in >> std::ws;
-
-    in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' };
+    in >> DelimiterIO{ '(' };
     if (!in) return in;
 
-    int i = 0;
-    while (i < 3) {
-        char k = in.get();
-        char e = in.get();
-        char y = in.get();
+    while (in && in.peek() != ')') {
+        in >> DelimiterIO{ ':' };
+        if (!in) return in;
 
-        if (!in || k != 'k' || e != 'e' || y != 'y') {
+        std::string key;
+        char ch;
+        while (in.get(ch) && std::isalpha(static_cast<unsigned char>(ch))) {
+            key += ch;
+        }
+        if (key != "key1" && key != "key2" && key != "key3") {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+        if (ch != ' ') {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        char num = in.get();
-        if (!in) {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        char space = in.get();
-        if (space != ' ') {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-
-        if (num == '1' && !hasKey1) {
+        if (key == "key1" && !hasKey1) {
             in >> SllIO{ input.key1 };
             hasKey1 = true;
-        } else if (num == '2' && !hasKey2) {
+        } else if (key == "key2" && !hasKey2) {
             in >> CmpIO{ input.key2 };
             hasKey2 = true;
-        } else if (num == '3' && !hasKey3) {
+        } else if (key == "key3" && !hasKey3) {
             in >> StrIO{ input.key3 };
             hasKey3 = true;
         } else {
@@ -183,10 +186,17 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
             return in;
         }
 
-        in >> DelimiterIO{ ':' };
         if (!in) return in;
 
-        ++i;
+        in >> std::ws;
+        if (in.peek() == ':') {
+            continue;
+        } else if (in.peek() == ')') {
+            break;
+        } else {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
     }
 
     in >> DelimiterIO{ ')' };
@@ -205,9 +215,8 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
     if (!sentry) return out;
 
     iofmtguard guard(out);
-    out << "(:key1 " << src.key1 << "ll"
-        << ":key2 #c(" << std::fixed << std::setprecision(1)
-        << src.key2.real() << " " << src.key2.imag() << ")"
+    out << "(:key1 " << src.key1
+        << ":key2 #c(" << src.key2.real() << " " << src.key2.imag() << ")"
         << ":key3 \"" << src.key3 << "\":)";
     return out;
 }
