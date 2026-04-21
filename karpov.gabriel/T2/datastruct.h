@@ -36,11 +36,11 @@ public:
     iofmtguard(std::basic_ios<char>& s);
     ~iofmtguard();
 private:
-    std::basic_ios<char>& s_;
-    std::streamsize width_;
+    std::basic_ios<char>& stream_;
+    std::streamsize w_;
     char fill_;
-    std::streamsize precision_;
-    std::basic_ios<char>::fmtflags fmt_;
+    std::streamsize prec_;
+    std::basic_ios<char>::fmtflags flags_;
 };
 
 std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
