@@ -98,11 +98,24 @@ std::istream& operator>>(std::istream& in, ULongLongIO&& key) {
 
 std::istream& operator>>(std::istream& in, StringIO&& dest) {
     std::istream::sentry sentry(in);
-    if (!sentry)
-    {
+    if (!sentry) {
         return in;
     }
-    return std::getline(in >> DelimiterIO{ '"' }, dest.ref, '"');
+
+    in >> DelimiterIO{ '"' };
+    if (!in) {
+        return in;
+    }
+
+    std::getline(in, dest.ref, '"');
+
+    if (in.fail() || (in.eof() && dest.ref.empty())) {
+        if (in.eof()) {
+            in.setstate(std::ios::failbit);
+        }
+    }
+
+    return in;
 }
 
 
