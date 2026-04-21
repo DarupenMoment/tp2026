@@ -8,8 +8,6 @@
 #include <limits>
 #include <cmath>
 #include <cstdlib>
-#include <cctype>
-#include <sstream>
 
 struct DataStruct {
     long long key1;
@@ -55,22 +53,21 @@ bool compareDataStruct(const DataStruct& a, const DataStruct& b);
 
 int main() {
     std::vector<DataStruct> data;
-    std::string line;
 
-    while (std::getline(std::cin, line)) {
-        if (line.empty()) continue;
-        std::istringstream ss(line);
-        DataStruct tmp;
-        if (ss >> tmp) {
-            data.push_back(tmp);
+    while (!std::cin.eof()) {
+        std::copy(std::istream_iterator<DataStruct>(std::cin),
+                  std::istream_iterator<DataStruct>(),
+                  std::back_inserter(data));
+
+        if (std::cin.fail() && !std::cin.eof()) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
     }
 
     std::sort(data.begin(), data.end(), compareDataStruct);
 
-    for (const auto& d : data) {
-        std::cout << d << "\n";
-    }
+    std::copy(data.begin(), data.end(), std::ostream_iterator<DataStruct>(std::cout, "\n"));
 
     return EXIT_SUCCESS;
 }
@@ -94,22 +91,17 @@ std::istream& operator>>(std::istream& in, SllIO&& dest) {
         return in;
     }
 
-    std::streampos pos = in.tellg();
     char c1, c2;
-    if (in.get(c1) && in.get(c2)) {
-        if ((c1 == 'l' || c1 == 'L') && (c2 == 'l' || c2 == 'L')) {
-            char next = in.peek();
-            if (next != ':' && next != ')' && !std::isspace(next)) {
-                in.setstate(std::ios::failbit);
-            }
-        } else {
-            in.clear();
-            in.seekg(pos);
-        }
-    } else {
-        in.clear();
-        in.seekg(pos);
+    if (!in.get(c1) || !in.get(c2)) {
+        in.setstate(std::ios::failbit);
+        return in;
     }
+
+    bool valid = (c1 == 'l' || c1 == 'L') && (c2 == 'l' || c2 == 'L');
+    if (!valid) {
+        in.setstate(std::ios::failbit);
+    }
+
     return in;
 }
 
@@ -118,7 +110,9 @@ std::istream& operator>>(std::istream& in, CmpIO&& dest) {
     if (!sentry) return in;
 
     double re = 0.0, im = 0.0;
+
     in >> DelimiterIO{ '#' } >> DelimiterIO{ 'c' } >> DelimiterIO{ '(' } >> re >> im >> DelimiterIO{ ')' };
+
     if (in) {
         dest.ref = std::complex<double>(re, im);
     }
@@ -132,6 +126,7 @@ std::istream& operator>>(std::istream& in, StrIO&& dest) {
     if (!(in >> DelimiterIO{ '"' })) {
         return in;
     }
+
     std::getline(in, dest.ref, '"');
     if (!in || in.eof()) {
         in.setstate(std::ios::failbit);
@@ -147,34 +142,40 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
     bool hasKey1 = false, hasKey2 = false, hasKey3 = false;
 
     in >> std::ws;
-    in >> DelimiterIO{ '(' };
+
+    in >> DelimiterIO{ '(' } >> DelimiterIO{ ':' };
     if (!in) return in;
 
-    while (in && in.peek() != ')') {
-        in >> DelimiterIO{ ':' };
-        if (!in) return in;
+    int i = 0;
+    while (i < 3) {
+        char k = in.get();
+        char e = in.get();
+        char y = in.get();
 
-        std::string key;
-        char ch;
-        while (in.get(ch) && std::isalpha(static_cast<unsigned char>(ch))) {
-            key += ch;
-        }
-        if (key != "key1" && key != "key2" && key != "key3") {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-        if (ch != ' ') {
+        if (!in || k != 'k' || e != 'e' || y != 'y') {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        if (key == "key1" && !hasKey1) {
+        char num = in.get();
+        if (!in) {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        char space = in.get();
+        if (space != ' ') {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        if (num == '1' && !hasKey1) {
             in >> SllIO{ input.key1 };
             hasKey1 = true;
-        } else if (key == "key2" && !hasKey2) {
+        } else if (num == '2' && !hasKey2) {
             in >> CmpIO{ input.key2 };
             hasKey2 = true;
-        } else if (key == "key3" && !hasKey3) {
+        } else if (num == '3' && !hasKey3) {
             in >> StrIO{ input.key3 };
             hasKey3 = true;
         } else {
@@ -182,17 +183,10 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
             return in;
         }
 
+        in >> DelimiterIO{ ':' };
         if (!in) return in;
 
-        in >> std::ws;
-        if (in.peek() == ':') {
-            continue;
-        } else if (in.peek() == ')') {
-            break;
-        } else {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
+        ++i;
     }
 
     in >> DelimiterIO{ ')' };
@@ -202,6 +196,7 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
     } else {
         in.setstate(std::ios::failbit);
     }
+
     return in;
 }
 
@@ -210,18 +205,24 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
     if (!sentry) return out;
 
     iofmtguard guard(out);
-    out << "(:key1 " << src.key1
-        << ":key2 #c(" << src.key2.real() << " " << src.key2.imag() << ")"
+    out << "(:key1 " << src.key1 << "ll"
+        << ":key2 #c(" << std::fixed << std::setprecision(1)
+        << src.key2.real() << " " << src.key2.imag() << ")"
         << ":key3 \"" << src.key3 << "\":)";
     return out;
 }
 
 bool compareDataStruct(const DataStruct& a, const DataStruct& b) {
-    if (a.key1 != b.key1) return a.key1 < b.key1;
+    if (a.key1 != b.key1)
+        return a.key1 < b.key1;
+
     double absA = std::abs(a.key2);
     double absB = std::abs(b.key2);
     const double eps = 1e-9;
-    if (std::abs(absA - absB) > eps) return absA < absB;
+
+    if (std::abs(absA - absB) > eps)
+        return absA < absB;
+
     return a.key3.length() < b.key3.length();
 }
 
@@ -233,5 +234,4 @@ iofmtguard::~iofmtguard() {
     s_.precision(precision_);
     s_.flags(fmt_);
 }
-
 
