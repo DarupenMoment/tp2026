@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iomanip>
 #include <cctype>
+#include <set>
 
 using namespace std::placeholders;
 
@@ -16,10 +17,29 @@ struct Point {
     int x, y;
 };
 
+bool operator==(const Point& a, const Point& b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+bool operator!=(const Point& a, const Point& b) {
+    return !(a == b);
+}
+
+bool operator<(const Point& a, const Point& b) {
+    if (a.x != b.x) return a.x < b.x;
+    return a.y < b.y;
+}
+
+
 struct Polygon {
     std::vector<Point> points;
 };
 
+bool operator<(const Polygon& a, const Polygon& b) {
+    if (a.points.size() != b.points.size())
+        return a.points.size() < b.points.size();
+    return a.points < b.points;
+}
 size_t getVertexCount(const Polygon& p) {
     return p.points.size();
 }
@@ -52,6 +72,22 @@ bool compareArea(const Polygon& a, const Polygon& b) {
 
 bool compareVertexes(const Polygon& a, const Polygon& b) {
     return a.points.size() < b.points.size();
+}
+
+bool equalPoly(const Polygon& a, const Polygon& b) {
+    size_t size1 = a.points.size();
+    size_t size2 = b.points.size();
+    if(size1 != size2) return false;
+    else{
+        for(size_t i = 0; i<size1;i++){
+            if(a.points[i] != b.points[i]) return false;
+        }
+    }
+    return true;
+}
+
+bool operator==(const Polygon& a, const Polygon& b){
+    return equalPoly(a,b);
 }
 
 struct AreaSummator {
@@ -140,13 +176,17 @@ int main(int argc, char* argv[]) {
         Polygon p = parsePolygon(line);
         if (!p.points.empty()) container.push_back(p);
     }
+    std::set<Polygon> unique_set(container.begin(), container.end());
+    container.assign(unique_set.begin(), unique_set.end());
+
+
 
     std::string cmd;
     while (std::cin >> cmd) {
         if (cmd == "AREA") {
             std::string sub; std::cin >> sub;
             double res = 0;
-            if (container.empty()) { std::cout << "<INVALID COMMAND>" << '\n'; continue; }
+            if (container.empty()) { std::cout << "0.0" << '\n'; continue; }
             if (sub == "ODD"){
                 res = std::accumulate(container.begin(), container.end(), 0.0, AreaSummator(isVertexCountOdd));
                 std::cout << std::fixed << std::setprecision(1) << res << '\n';
