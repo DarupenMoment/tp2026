@@ -8,6 +8,7 @@
 #include <functional>
 #include <cmath>
 #include <iomanip>
+#include <cctype>
 
 using namespace std::placeholders;
 
@@ -109,12 +110,19 @@ Polygon parsePolygon(const std::string& line) {
     for (int i = 0; i < n; ++i) {
         char op, sem, cl;
         int x, y;
-        if (iss >> op >> x >> sem >> y >> cl) {
+        if(!(iss >> op >> x >> sem >> y >> cl)) return {};
+        if(op == '(' && sem == ';' && cl ==')'){
             poly.points.push_back({x, y});
         }
     }
+    char check;
+    if(iss >> check) return {};
     return (poly.points.size() == static_cast<size_t>(n)) ? poly : Polygon{};
 }
+
+
+
+
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -138,21 +146,33 @@ int main(int argc, char* argv[]) {
         if (cmd == "AREA") {
             std::string sub; std::cin >> sub;
             double res = 0;
-            if (sub == "ODD")
+            if (container.empty()) { std::cout << "<INVALID COMMAND>" << '\n'; continue; }
+            if (sub == "ODD"){
                 res = std::accumulate(container.begin(), container.end(), 0.0, AreaSummator(isVertexCountOdd));
-            else if (sub == "EVEN")
+                std::cout << std::fixed << std::setprecision(1) << res << '\n';
+            }
+            else if (sub == "EVEN"){
                 res = std::accumulate(container.begin(), container.end(), 0.0, AreaSummator(isVertexCountEven));
+                std::cout << std::fixed << std::setprecision(1) << res << '\n';
+            }
             else if (sub == "MEAN") {
-                if (container.empty()) { std::cout << "<INVALID COMMAND>" << '\n'; continue; }
                 res = std::accumulate(container.begin(), container.end(), 0.0,
                  AreaSummator([](const Polygon&){return true;})) / container.size();
+                 std::cout << std::fixed << std::setprecision(1) << res << '\n';
             }
             else {
-                if(std::stoul(sub) > 2) {
-                    std::string sub; std::cin >> sub;
+                bool isNumber = (!sub.empty() && std::all_of(sub.begin(),sub.end(), ::isdigit));
+                if(isNumber){
                     size_t n = std::stoul(sub);
-                    res = std::accumulate(container.begin(), container.end(), 0.0, AreaSummator(std::bind(isVertexCountEqual, _1, n)));
-                    std::cout << std::fixed << std::setprecision(1) << res << '\n';
+                    if(n > 2) {
+                        res = std::accumulate(container.begin(), container.end(), 0.0,
+                         AreaSummator(std::bind(isVertexCountEqual, _1, n)));
+                        std::cout << std::fixed << std::setprecision(1) << res << '\n';
+                    }
+                    else {
+                        std::cout << "<INVALID COMMAND>" << '\n';
+                        std::getline(std::cin, line);
+                    }
                 }
                 else {
                     std::cout << "<INVALID COMMAND>" << '\n';
@@ -174,11 +194,20 @@ int main(int argc, char* argv[]) {
         }
         else if (cmd == "COUNT") {
             std::string sub; std::cin >> sub;
+            bool isNumber = (!sub.empty() && std::all_of(sub.begin(),sub.end(), ::isdigit));
             if (sub == "ODD") std::cout << std::count_if(container.begin(), container.end(), isVertexCountOdd) << '\n';
+
             else if (sub == "EVEN") std::cout << std::count_if(container.begin(), container.end(), isVertexCountEven) << '\n';
-            else if (std::stoul(sub) > 2){
+
+            else if(isNumber){
+                if (std::stoul(sub) > 2){
                 std::cout << std::count_if(container.begin(), container.end(),
                 std::bind(isVertexCountEqual, _1, std::stoul(sub))) << '\n';
+                }
+                else {
+                    std::cout << "<INVALID COMMAND>" << '\n';
+                    std::getline(std::cin, line);
+                }
             }
             else {
                 std::cout << "<INVALID COMMAND>" << '\n';
