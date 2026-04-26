@@ -11,22 +11,22 @@
 #include <vector>
 #include <limits>
 
-/*
-(:key1 10ll:key2 #c(1.0 -1.0):key3 "Data":)
-(:key1 -5ll:key2 #c(3.0 4.0):key3 "Hello":)
-(3k)
-(:key1 10ll:key2 #c(1.0 -1.0):key3 "Short":)
-(:key1 10ll:key2 #c(0.0 0.0):key3 "Zero":)
-(:key2 #c(2.0 0.0):key3 "Reordered":key1 -5ll:)
-vkwbje12e
-(:key1 ll:key2 #c(1.0 1.0):key3 "Invalid":)
-(:key1 99ll:key2 #c(1.0 -1.0):key3 "Last":)
-*/
+
+//(:key1 10ll:key2 #c(1.0 -1.0):key3 "Data":)
+//(:key1 -5ll:key2 #c(3.0 4.0):key3 "Hello":)
+//(3k)
+//(:key1 10ll:key2 #c(1.0 -1.0):key3 "Short":)
+//(:key1 10ll:key2 #c(0.0 0.0):key3 "Zero":)
+//(:key2 #c(2.0 0.0):key3 "Reordered":key1 -5ll:)
+//vkwbje12e
+//(:key1 ll:key2 #c(1.0 1.0):key3 "Invalid":)
+//(:key1 99ll:key2 #c(1.0 -1.0):key3 "Last":)
+
 
 struct DataStruct {
-    long long				key1;
-    std::complex<double>	key2;
-    std::string				key3;
+    long long key1;
+    std::complex<double> key2;
+    std::string key3;
 };
 
 struct DelimiterIO {
