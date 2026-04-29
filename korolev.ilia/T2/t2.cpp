@@ -6,8 +6,8 @@
 #include <utility>
 
 struct DataStruct {
-    char key1;
-    std::pair<long long, unsigned long long> key2;
+    char key1 = '\0';
+    std::pair<long long, unsigned long long> key2 = {0, 0};
     std::string key3;
 };
 
@@ -17,6 +17,10 @@ void skipToRecordEnd(std::istream& is) {
 }
 
 std::istream& operator>>(std::istream& is, DataStruct& obj) {
+    obj.key1 = '\0';
+    obj.key2 = {0, 0};
+    obj.key3.clear();
+
     char ch;
     if (!(is >> ch) || ch != '(') {
         return is;
@@ -151,13 +155,16 @@ int main() {
         std::istream_iterator<DataStruct>(),
         std::back_inserter(data)
     );
-
-
     data.erase(
         std::remove_if(data.begin(), data.end(),
             [](const DataStruct& ds) { return ds.key1 == '\0'; }),
         data.end()
     );
+
+    if (data.empty()) {
+        std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
+        return 0;
+    }
 
     std::sort(data.begin(), data.end(), Comparator());
 
