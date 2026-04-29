@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iterator>
 #include <utility>
-#include <iomanip>
 
 struct DataStruct {
     char key1;
@@ -12,30 +11,38 @@ struct DataStruct {
     std::string key3;
 };
 
+void skipToRecordEnd(std::istream& is) {
+    char ch;
+    while (is >> ch && ch != ')') {}
+}
+
 std::istream& operator>>(std::istream& is, DataStruct& obj) {
     char ch;
     if (!(is >> ch) || ch != '(') {
-        is.setstate(std::ios::failbit);
         return is;
     }
 
     bool has_key1 = false, has_key2 = false, has_key3 = false;
+    bool valid = true;
 
     while (is >> ch && ch != ')') {
         if (ch == ':') {
             std::string field;
-            is >> field;
+            if (!(is >> field)) {
+                skipToRecordEnd(is);
+                return is;
+            }
 
             if (field == "key1") {
                 char q1, val, q2;
-                is >> q1 >> val >> q2;
-                if (q1 != '\'' || q2 != '\'') {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> q1 >> val >> q2) || q1 != '\'' || q2 != '\'') {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-                is >> ch;
-                if (ch != ':') {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> ch) || ch != ':') {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
                 obj.key1 = val;
@@ -43,75 +50,77 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
             }
             else if (field == "key2") {
                 char open_p;
-                is >> open_p;
-                if (open_p != '(') {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> open_p) || open_p != '(') {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
                 std::string tag_n;
-                is >> tag_n;
-                if (tag_n != ":N") {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> tag_n) || tag_n != ":N") {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
                 long long n;
-                is >> n;
-
+                if (!(is >> n)) {
+                    valid = false;
+                    skipToRecordEnd(is);
+                    return is;
+                }
                 std::string tag_d;
-                is >> tag_d;
-                if (tag_d != ":D") {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> tag_d) || tag_d != ":D") {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
                 unsigned long long d;
-                is >> d;
-
+                if (!(is >> d)) {
+                    valid = false;
+                    skipToRecordEnd(is);
+                    return is;
+                }
                 std::string end_tag;
-                is >> end_tag;
-                if (end_tag != ":)") {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> end_tag) || end_tag != ":)") {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
-                is >> ch;
-                if (ch != ':') {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> ch) || ch != ':') {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
                 obj.key2 = {n, d};
                 has_key2 = true;
             }
             else if (field == "key3") {
                 char quote;
-                is >> quote;
-                if (quote != '"') {
-                    is.setstate(std::ios::failbit);
+                if (!(is >> quote) || quote != '"') {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
-                std::getline(is, obj.key3, '"');
-
-                is >> ch;
-                if (ch != ':') {
-                    is.setstate(std::ios::failbit);
+                if (!std::getline(is, obj.key3, '"')) {
+                    valid = false;
+                    skipToRecordEnd(is);
                     return is;
                 }
-
+                if (!(is >> ch) || ch != ':') {
+                    valid = false;
+                    skipToRecordEnd(is);
+                    return is;
+                }
                 has_key3 = true;
             }
             else {
-                is.setstate(std::ios::failbit);
+                skipToRecordEnd(is);
                 return is;
             }
         }
     }
 
-    if (!has_key1 || !has_key2 || !has_key3) {
-        is.setstate(std::ios::failbit);
+    if (!valid || !has_key1 || !has_key2 || !has_key3) {
+        obj.key1 = '\0';
     }
 
     return is;
@@ -126,17 +135,10 @@ std::ostream& operator<<(std::ostream& os, const DataStruct& obj) {
 
 struct Comparator {
     bool operator()(const DataStruct& a, const DataStruct& b) const {
-        if (a.key1 != b.key1) {
-            return a.key1 < b.key1;
-        }
-
-        double val_a = static_cast<double>(a.key2.first) / a.key2.second;
-        double val_b = static_cast<double>(b.key2.first) / b.key2.second;
-
-        if (val_a != val_b) {
-            return val_a < val_b;
-        }
-
+        if (a.key1 != b.key1) return a.key1 < b.key1;
+        double va = static_cast<double>(a.key2.first) / a.key2.second;
+        double vb = static_cast<double>(b.key2.first) / b.key2.second;
+        if (va != vb) return va < vb;
         return a.key3.length() < b.key3.length();
     }
 };
@@ -148,6 +150,13 @@ int main() {
         std::istream_iterator<DataStruct>(std::cin),
         std::istream_iterator<DataStruct>(),
         std::back_inserter(data)
+    );
+
+
+    data.erase(
+        std::remove_if(data.begin(), data.end(),
+            [](const DataStruct& ds) { return ds.key1 == '\0'; }),
+        data.end()
     );
 
     std::sort(data.begin(), data.end(), Comparator());
