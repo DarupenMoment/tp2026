@@ -43,12 +43,12 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                 if (!(is >> q1 >> val >> q2) || q1 != '\'' || q2 != '\'') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 if (!(is >> ch) || ch != ':') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 obj.key1 = val;
                 has_key1 = true;
@@ -58,42 +58,42 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                 if (!(is >> open_p) || open_p != '(') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 std::string tag_n;
                 if (!(is >> tag_n) || tag_n != ":N") {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 long long n;
                 if (!(is >> n)) {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 std::string tag_d;
                 if (!(is >> tag_d) || tag_d != ":D") {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 unsigned long long d;
                     if (!(is >> d) || d==0) {
                     valid = false;
                      skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 char c1, c2;
                 if (!(is >> c1 >> c2) || c1 != ':' || c2 != ')') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 if (!(is >> ch) || ch != ':') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 obj.key2 = {n, d};
                 has_key2 = true;
@@ -103,23 +103,24 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                 if (!(is >> quote) || quote != '"') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 if (!std::getline(is, obj.key3, '"')) {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 if (!(is >> ch) || ch != ':') {
                     valid = false;
                     skipToRecordEnd(is);
-                    return is;
+                    break;
                 }
                 has_key3 = true;
             }
             else {
+                valid=false;
                 skipToRecordEnd(is);
-                return is;
+                break;
             }
         }
     }
@@ -150,19 +151,16 @@ struct Comparator {
 
 int main() {
     std::vector<DataStruct> data;
-    while (!std::cin.eof())
-    {
-        std::copy(
-            std::istream_iterator<DataStruct>(std::cin),
-            std::istream_iterator<DataStruct>(),
-            std::back_inserter(data)
-        );
-        if (!std::cin.eof()){
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        }
-    }
-
+    std::copy(
+        std::istream_iterator<DataStruct>(std::cin),
+        std::istream_iterator<DataStruct>(),
+        std::back_inserter(data)
+    );
+    data.erase(
+        std::remove_if(data.begin(), data.end(),
+            [](const DataStruct& ds) { return ds.key1 == '\0'; }),
+        data.end()
+    );
     if (data.empty()){
         std::cout<<"Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
     }else{
