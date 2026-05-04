@@ -33,7 +33,7 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
     while (is >> ch && ch != ')') {
         if (ch == ':') {
             is >>std::ws;
-            if (is.peak()==')'){
+            if (is.peek()==')'){
                 continue;
             }
             std::string field;
