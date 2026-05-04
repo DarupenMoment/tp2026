@@ -60,8 +60,8 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                     skipToRecordEnd(is);
                     break;
                 }
-                std::string tag_n;
-                if (!(is >> tag_n) || tag_n != ":N") {
+                char c1, c2;
+                if (!(is >> c1 >> c2) || c1 != ":" || c2!= "N") {
                     valid = false;
                     skipToRecordEnd(is);
                     break;
@@ -72,8 +72,8 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                     skipToRecordEnd(is);
                     break;
                 }
-                std::string tag_d;
-                if (!(is >> tag_d) || tag_d != ":D") {
+                char c1, c2;
+                if (!(is >> c1 >> c2) || c1!= ":" || c2!="D") {
                     valid = false;
                     skipToRecordEnd(is);
                     break;
@@ -111,7 +111,8 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                     break;
                 }
                 if (!(is >> quote) || quote != '"') {
-                    valid = false; skipToRecordEnd(is);
+                    valid = false;
+                    skipToRecordEnd(is);
                     break;
                 }
                 if (!(is >> ch) || ch != ':') {
