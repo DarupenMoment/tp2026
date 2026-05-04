@@ -108,11 +108,6 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                     skipToRecordEnd(is);
                     break;
                 }
-                if (!(is >> quote) || quote != '"') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
                 if (!(is >> ch) || ch != ':') {
                     valid = false;
                     skipToRecordEnd(is);
