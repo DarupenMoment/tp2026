@@ -14,7 +14,14 @@ struct DataStruct {
 
 void skipToRecordEnd(std::istream& is) {
     char ch;
-    while (is >> ch && ch != ')') {}
+    int depth=1;
+    while (depth>0 && is>ch ){
+        if (ch== '('){
+            depth++;
+        } else if (ch == ')'){
+            depth--;
+        }
+    }
 }
 
 std::istream& operator>>(std::istream& is, DataStruct& obj) {
@@ -109,6 +116,10 @@ std::istream& operator>>(std::istream& is, DataStruct& obj) {
                 skipToRecordEnd(is);
                 break;
             }
+        } else{
+            valid = false;
+            skipToRecordEnd(is);
+            break;
         }
     }
 
