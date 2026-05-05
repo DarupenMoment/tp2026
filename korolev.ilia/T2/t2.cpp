@@ -5,168 +5,142 @@
 #include <iterator>
 #include <limits>
 #include <utility>
+#include <cmath>
 
 struct DataStruct {
-    char key1 = '\0';
-    std::pair<long long, unsigned long long> key2 = {0, 0};
+    char key1;
+    std::pair<long long, unsigned long long> key2;
     std::string key3;
 };
 
-void skipToRecordEnd(std::istream& is) {
-    char ch;
-    int depth=1;
-    while (depth>0 && is>>ch ){
-        if (ch== '('){
-            depth++;
-        } else if (ch == ')'){
-            depth--;
-        }
+struct DelimiterIO {
+    char exp;
+};
+
+std::istream& operator>>(std::istream& in, DelimiterIO dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
+    char c;
+    in >> c;
+    if (in && c != dest.exp) {
+        in.setstate(std::ios::failbit);
     }
+    return in;
+}
+..
+struct RationalIO {
+    std::pair<long long, unsigned long long>& ref;
+};
+
+std::istream& operator>>(std::istream& in, RationalIO dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
+    long long n;
+    unsigned long long d;
+    in >> DelimiterIO{'('} >> DelimiterIO{':'} >> DelimiterIO{'N'} >> n;
+    in >> DelimiterIO{':'} >> DelimiterIO{'D'} >> d;
+    in >> DelimiterIO{':'} >> DelimiterIO{')'};
+    if (in && d != 0) {
+        dest.ref = {n, d};
+    } else {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
 }
 
-std::istream& operator>>(std::istream& is, DataStruct& obj) {
-    obj.key1 = '\0';
-    obj.key2 = {0, 0};
-    obj.key3.clear();
+struct StringIO {
+    std::string& ref;
+};
 
-    char ch;
-    if (!(is >> ch) || ch != '(') {
-        return is;
-    }
+std::istream& operator>>(std::istream& in, StringIO dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
+    return std::getline(in >> DelimiterIO{'"'}, dest.ref, '"');
+}
 
-    bool has_key1 = false, has_key2 = false, has_key3 = false;
-    bool valid = true;
+std::istream& operator>>(std::istream& in, DataStruct& dest) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
 
-    while (is >> ch && ch != ')') {
-        if (ch == ':') {
-            is >>std::ws;
-            if (is.peek()==')'){
-                continue;
-            }
-            std::string field;
-            if (!(is >> field)) {
-                skipToRecordEnd(is);
-                return is;
-            }
+    DataStruct input;
+    in >> DelimiterIO{'('} >> DelimiterIO{':'};
 
-            if (field == "key1") {
-                char q1, val, q2;
-                if (!(is >> q1 >> val >> q2) || q1 != '\'' || q2 != '\'') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                obj.key1 = val;
-                has_key1 = true;
-            }
-            else if (field == "key2") {
-                char open_p;
-                if (!(is >> open_p) || open_p != '(') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                char c1, c2;
-                if (!(is >> c1 >> c2) || c1 != ':' || c2!= 'N') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                long long n;
-                if (!(is >> n)) {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                if (!(is >> c1 >> c2) || c1!= ':' || c2!='D') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                unsigned long long d;
-                    if (!(is >> d) || d==0) {
-                    valid = false;
-                     skipToRecordEnd(is);
-                    break;
-                }
-                if (!(is >> c1 >> c2) || c1 != ':' || c2 != ')') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                obj.key2 = {n, d};
-                has_key2 = true;
-            }
-            else if (field == "key3") {
-                char quote;
-                if (!(is >> quote) || quote != '"') {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                if (!std::getline(is, obj.key3, '"')) {
-                    valid = false;
-                    skipToRecordEnd(is);
-                    break;
-                }
-                has_key3 = true;
-            }
-            else {
-                valid=false;
-                skipToRecordEnd(is);
-                break;
-            }
-        } else{
-            valid = false;
-            skipToRecordEnd(is);
-            break;
+    for (int i = 0; i < 3; ++i) {
+        std::string key;
+        char c;
+        while (in >> c && std::isalpha(c)) {
+            key += c;
+        }
+        if (in) {
+            in.putback(c);
+        }
+
+        if (key == "key1") {
+            in >> DelimiterIO{'\''} >> input.key1 >> DelimiterIO{'\''};
+        } else if (key == "key2") {
+            in >> RationalIO{input.key2};
+        } else if (key == "key3") {
+            in >> StringIO{input.key3};
+        } else {
+            in.setstate(std::ios::failbit);
+        }
+
+        if (i < 2) {
+            in >> DelimiterIO{':'};
         }
     }
 
-    if (!valid || !has_key1 || !has_key2 || !has_key3) {
-        obj.key1 = '\0';
-    }
+    in >> DelimiterIO{':'} >> DelimiterIO{')'};
 
-    return is;
+    if (in) {
+        dest = input;
+    }
+    return in;
 }
 
 std::ostream& operator<<(std::ostream& os, const DataStruct& obj) {
-    os << "(:key1 '" << obj.key1 << "':";
-    os << "key2 (:N " << obj.key2.first << ":D " << obj.key2.second << ":):";
-    os << "key3 \"" << obj.key3 << "\":)";
+    std::ostream::sentry sentry(os);
+    if (!sentry) return os;
+    os << "(:key1 '" << obj.key1 << "':key2 (:N " << obj.key2.first
+       << ":D " << obj.key2.second << ":):key3 \"" << obj.key3 << "\":)";
     return os;
 }
 
 struct Comparator {
     bool operator()(const DataStruct& a, const DataStruct& b) const {
         if (a.key1 != b.key1) return a.key1 < b.key1;
+
         double va = static_cast<double>(a.key2.first) / a.key2.second;
         double vb = static_cast<double>(b.key2.first) / b.key2.second;
-        if (va != vb) return va < vb;
+        if (std::abs(va - vb) >= 1e-9) return va < vb;
+
         return a.key3.length() < b.key3.length();
     }
 };
 
 int main() {
     std::vector<DataStruct> data;
-    std::copy(
-        std::istream_iterator<DataStruct>(std::cin),
-        std::istream_iterator<DataStruct>(),
-        std::back_inserter(data)
-    );
-    data.erase(
-        std::remove_if(data.begin(), data.end(),
-            [](const DataStruct& ds) { return ds.key1 == '\0'; }),
-        data.end()
-    );
-    if (data.empty()){
-    }else{
-        std::sort(data.begin(), data.end(), Comparator());
-        std::copy(
-            data.begin(),
-            data.end(),
-            std::ostream_iterator<DataStruct>(std::cout, "\n")
-        );
+
+    while (true) {
+        DataStruct tmp;
+        if (std::cin >> tmp) {
+            data.push_back(tmp);
+        } else {
+            if (std::cin.eof()) {
+                break;
+            }
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
     }
+
+    std::sort(data.begin(), data.end(), Comparator());
+
+    std::copy(
+        data.begin(),
+        data.end(),
+        std::ostream_iterator<DataStruct>(std::cout, "\n")
+    );
+
     return 0;
 }
